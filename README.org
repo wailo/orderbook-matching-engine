@@ -1,0 +1,56 @@
+* System Requirements:
+|----+----------------------+-------------------------------------------------------------------|
+| ID | Application          | Description                                                       |
+|----+----------------------+-------------------------------------------------------------------|
+|  1 | Order Management API | Should Receive order requests from a client                       |
+|  2 | Order Management API | Should Matches/executes orders                                    |
+|  3 | Order Management API | Should Send order buy update to the owner of a buy order          |
+|  4 | Order Management API | Should Send order sell update to the owner of a sell order        |
+|  5 | Order Management API | Should Keep track of active orders                                |
+|  6 | Order Management API | Should Publish order book and public trades using Market Data API |
+|  7 | Contracts            |                                                                   |
+|  8 | Market Data API      | Should send order books to all subscribed clients                 |
+|  9 | Market Data API      | Should send public traders to all subscribed clients              |
+| 10 | Client               | Should send buy order requests to the Order Management API        |
+| 11 | Client               | Should send sell order requests to the Order Management API       |
+| 12 | Client               | Should handle data received from the Market Data API              |
+|----+----------------------+-------------------------------------------------------------------|
+
+
+* Building the solution
+** Requirements
+   * CMAKE
+   * Clang
+   * BOOST unit_test_framework
+** Steps
+from the project directory
+    1. cd build
+    2. cmake ..
+
+  * Running the unit test
+    1. make test
+ 
+  *  Description
+
+  *  Assumptions:
+   * Orders matching is proiorties per price as following:
+      1. Buy ordres with highest price got matched first.
+      2. Sell orders with lowest price got matched first.
+   * Order price comparison epsilon.
+
+
+* Choice of container was based on answering the following questions:
+    1. Is perfromance is critical?  
+       Yes.
+    
+    2. Sorting required?
+       No, only min/max element must be the first item in the container.
+    
+    3. Lookups?                  
+       No.
+       
+    4. Insertions/deletions from the container.
+       Objects are always appended at the back. No insertion happens in the middle of front of the container.
+       
+   * Orders can't be modified.
+   

@@ -1,0 +1,49 @@
+cmake_minimum_required (VERSION 3.0)
+project (matching_engine)
+
+
+# Make your header file accessible to the compiler
+
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib )
+
+# used by rtags
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_FLAGS "-g  -Wall -std=c++14")
+
+file(GLOB SOURCES "src/*.cpp")
+ 
+#add_executable(matching_engine ${SOURCES})
+add_library(libmatching_engine SHARED ${SOURCES})
+
+
+enable_testing()
+find_package(Boost 1.60 COMPONENTS unit_test_framework)
+include_directories (${Boost_INCLUDE_DIRS})
+
+## Test units
+file(GLOB TEST_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/*.cpp)
+#Run through each source
+foreach(testSrc ${TEST_SRCS})
+  #Extract the filename without an extension (NAME_WE)
+  get_filename_component(testName ${testSrc} NAME_WE)
+
+  #Add compile target
+  add_executable(${testName} ${testSrc})
+
+  #link to Boost libraries AND your targets and dependencies
+  target_link_libraries(${testName} ${Boost_LIBRARIES} libmatching_engine)
+
+  #I like to move testing binaries into a testBin directory
+  set_target_properties(${testName} PROPERTIES 
+    RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/testBin)
+
+  #Finally add it to test execution - 
+  add_test(NAME ${testName} 
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/testBin 
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/testBin/${testName} --log_level=message )
+endforeach(testSrc)
+
+
