@@ -54,7 +54,7 @@ namespace webbtraders
                     return false;
                 }
                 }*/
-        bool createOrder(unsigned int p_trader_ID ,unsigned int volume, double price, orderSide side);
+        // bool createOrder(unsigned int p_trader_ID ,unsigned int volume, double price, orderSide side);
     private:
 
         //! Copy constructor

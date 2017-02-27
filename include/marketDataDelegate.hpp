@@ -9,7 +9,8 @@ namespace webbtraders
     public:
 
         virtual void onPublicTrade() = 0;
-        virtual void onTrade() = 0;
+        // virtual void onTrade() = 0;
+        virtual ~marketDataDelegate() = default;
     };
     
 

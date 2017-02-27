@@ -2,25 +2,27 @@
 #define ORDER_MANAGEMENT_H
 
 #include <vector>
-
+#include <unordered_map>
+#include <thread>
 #include "order.hpp"
 
 
 namespace webbtraders
 {
 
-    class orderDelegate; 
-    // class trader;
+    class marketData;
+    class orderDelegate;
+    // class marketDataDelegate;
     
     class orderManagement
     {
     public:
         //! Default constructor
-        orderManagement(orderDelegate& p_delegate) noexcept;
+        orderManagement(marketData& p_delegate) noexcept;
 
         //! Send Order
         //! return true if order request succeed, false otherwise
-        unsigned int createOrder(unsigned int p_trader_ID ,unsigned int volume, double price, orderSide side);
+        unsigned int createOrder(std::shared_ptr<orderDelegate> p_trader ,unsigned int volume, double price, orderSide side);
 
         //! Match Orders
         void matchOrders();
@@ -32,7 +34,7 @@ namespace webbtraders
         orderManagement(orderManagement &&other) = delete;
 
         //! Destructor
-        ~orderManagement() = default;
+        ~orderManagement() noexcept;
         
         //! Copy assignment operator
         orderManagement& operator=(const orderManagement &other) = delete;
@@ -45,7 +47,15 @@ namespace webbtraders
         std::vector<order> m_buyOrders;
         std::vector<order> m_sellOrders;
         unsigned int m_UUID{1};
-        orderDelegate& m_delegate;
+        marketData& m_delegate;
+
+        // <Order_Id, trader>;
+        std::unordered_map< int, std::shared_ptr<orderDelegate> > m_traders;
+
+        std::atomic<bool> m_order_changed{false};
+        std::thread m_orderMatchingThread;
+
+
 
     };
 }  // webbtraders

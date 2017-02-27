@@ -5,22 +5,41 @@
 #include "orderManagement.hpp"
 #include "trader.hpp"
 #include "orderDelegate.hpp"
+#include "marketData.hpp"
+
 
 using namespace webbtraders;
 
-orderManagement::orderManagement(orderDelegate& p_delegate) noexcept
+orderManagement::orderManagement(marketData& p_delegate) noexcept
     :m_delegate(p_delegate)
 {
 }
 
-unsigned int orderManagement::createOrder(unsigned int p_trader_ID, unsigned int volume, double price, orderSide side )
+orderManagement::~orderManagement() noexcept 
+{
+  m_orderMatchingThread.join();
+}
+
+unsigned int orderManagement::createOrder(std::shared_ptr<orderDelegate> p_trader_ID, unsigned int volume, double price, orderSide side )
 {
     // Check if the order is valid
-    // 
+    //    
     if (!price)
     {
         std::cout << "invalid order" << std::endl;
         return 0;
+    }
+
+
+    // waiting time-out 
+    int counter = 0;
+    while (m_order_changed)
+    {
+        if (counter++ > 1000 )
+        {
+            std::cout << "Queue is too busy, can't process orders" << std::endl;
+            return 0;
+        }
     }
     
     // Order are stored in heap    
@@ -35,15 +54,25 @@ unsigned int orderManagement::createOrder(unsigned int p_trader_ID, unsigned int
         std::push_heap(m_sellOrders.begin(), m_sellOrders.end(), std::greater<order>());
     }
 
-    // time_stamp? 
+    m_traders[m_UUID] = p_trader_ID;
+    // time_stamp?
+    
+    m_order_changed = true;
+    m_orderMatchingThread = std::thread( [&](){ this->matchOrders();});
+    // matchOrders();
     return m_UUID++;
 }
 
 
 void orderManagement::matchOrders()
 {
-    std::cout << "test" << std::endl;
 
+    if (!m_order_changed)
+    {
+        // std::cout << "no new orders" << std::endl;
+        return;
+    }
+    
     // While there are BUY and SELL orders in the queue
     while ( (!m_buyOrders.empty()) && (!m_sellOrders.empty()) )
     {
@@ -71,9 +100,10 @@ void orderManagement::matchOrders()
         auto trade_volume = std::min(_sell_order.volume(), _buy_order.volume() );
         _sell_order.setVolume(_sell_order.volume() - trade_volume);
         _buy_order.setVolume(_buy_order.volume() - trade_volume);
-        
-        m_delegate.onOrderExecution(_sell_order);
-        m_delegate.onOrderExecution(_buy_order);
+
+        m_traders[_sell_order.ID()]->onOrderExecution(_sell_order);
+        m_traders[_buy_order.ID()]->onOrderExecution(_buy_order);
+            
 
         if ( _buy_order.volume() == 0 )
         {
@@ -87,6 +117,11 @@ void orderManagement::matchOrders()
             m_sellOrders.pop_back();
         }
     }
+
+    m_order_changed = false; 
+    m_delegate.publishPublicTrades();
+    // m_delegate.onOrderExecution(_sell_order);
+    // m_delegate.onOrderExecution(_buy_order);
 
     // send order book
 }

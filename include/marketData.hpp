@@ -1,8 +1,8 @@
 #ifndef MARKETDATA_H
 #define MARKETDATA_H
-#include <unordered_map>
+#include <unordered_set>
 
-#include "orderDelegate.hpp"
+#include "marketDataDelegate.hpp"
 /*
  * A market data API, used by a client (the unit test) to receive the order book as well as public trades
  (report of execution where client identification has been removed)
@@ -10,19 +10,19 @@
 namespace webbtraders
 {
 
-    class marketDataDelegate;
     // enum class OrderRequestStatus
     class marketData
-        : public orderDelegate
     {
     public:
         //! Default constructor
         marketData() = default;
 
         // void logOrder( unsgined int p_order_ID,  );
-        void subscribe( std::shared_ptr<marketDataDelegate>& p_subscriber );
-        virtual void onOrderExecution(const unsigned int p_trader_ID, const order& p_order) override;
-        
+        void subscribe( std::shared_ptr<marketDataDelegate> p_subscriber );
+        // virtual void onOrderExecution(const order& p_order) override;
+        //virtual void onPublicTrade() override;
+        //  virtual void onTrade() override;
+        void publishPublicTrades();
         
         //! Copy constructor
         // marketData(const marketData &other);
@@ -41,7 +41,7 @@ namespace webbtraders
 
     private:
         
-        std::unordered_map< int, std::shared_ptr<marketDataDelegate> > m_traders;
+        std::unordered_set< std::shared_ptr<marketDataDelegate> > m_traders;
 
 
     };

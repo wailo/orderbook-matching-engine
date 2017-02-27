@@ -8,7 +8,9 @@ namespace webbtraders
     class orderDelegate
     {
         public:
-        virtual void onOrderExecution(const unsigned int p_trader_ID, const order& p_order) = 0;
+        virtual void onOrderExecution(const order& p_order) = 0;
+
+        virtual ~orderDelegate() = default;
     };
 
 }  // webbtraders
