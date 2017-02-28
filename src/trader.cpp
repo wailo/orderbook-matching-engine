@@ -15,23 +15,37 @@ trader::trader(market& p_market) noexcept
 {
 }
 
+void trader::onOrderBook( const std::vector<order>& p_orderBook )
+{
+
+    std::cout << "onOrderBook, ID:" << m_ID << std::endl;
+    for ( const auto& it : p_orderBook )
+    {
+        std::cout << it << std::endl;
+    }
+
+}
 void trader::onPublicTrade() 
 {
     std::cout << "onPublicTrade, ID:" << m_ID << std::endl;
 }
 
-/*void trader::onTrade()
+/*
+  void trader::onTrade()
   {
   std::cout << "onTrade, ID:" << m_ID << std::endl;
-  }*/
+  }
+*/
 
 bool trader::sendOrder(unsigned int p_volume, double p_price, orderSide p_side )
 {
-    return m_orderManagement.createOrder(std::make_shared<trader>(*this), p_volume, p_price, p_side);   
+    return m_orderManagement.addOrder(std::make_shared<trader>(*this), p_volume, p_price, p_side);   
 }
 
 
-void trader::onOrderExecution(const order& p_order)
+void trader::onOrderExecution(const orderExecution& p_orderExecution )
 {
-    std::cout << "onOrderExecution" << std::endl;
+    std::cout << "onOrderExecution: "  <<
+        static_cast<std::underlying_type<orderDelegate::orderExecutionState>::type>(p_orderExecution.m_state) << " " <<
+        p_orderExecution.m_activeVolume << std::endl;
 }

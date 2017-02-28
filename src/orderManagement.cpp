@@ -17,19 +17,17 @@ orderManagement::orderManagement(marketData& p_delegate) noexcept
 
 orderManagement::~orderManagement() noexcept 
 {
-  m_orderMatchingThread.join();
+    // std::cout << "orderManagement destructor" <<std::endl;
 }
 
-unsigned int orderManagement::createOrder(std::shared_ptr<orderDelegate> p_trader_ID, unsigned int volume, double price, orderSide side )
+unsigned int orderManagement::addOrder(std::shared_ptr<orderDelegate> p_trader_ID, unsigned int volume, double price, orderSide side )
 {
     // Check if the order is valid
     //    
-    if (!price)
+    if (!volume)
     {
-        std::cout << "invalid order" << std::endl;
         return 0;
     }
-
 
     // waiting time-out 
     int counter = 0;
@@ -42,35 +40,40 @@ unsigned int orderManagement::createOrder(std::shared_ptr<orderDelegate> p_trade
         }
     }
     
-    // Order are stored in heap    
+    // Orders are stored in heap    
     if ( side == orderSide::BUY )
     {
         m_buyOrders.emplace_back(m_UUID, volume, price, side ); 
         std::push_heap(m_buyOrders.begin(), m_buyOrders.end(), std::less<order>());
     }
-    if ( side == orderSide::SELL )
+    else if ( side == orderSide::SELL )
     {
         m_sellOrders.emplace_back(m_UUID, volume, price, side); 
         std::push_heap(m_sellOrders.begin(), m_sellOrders.end(), std::greater<order>());
+    }
+    else
+    {
+        std::cout << "invalid order type" << std::endl;
+        return 0;
     }
 
     m_traders[m_UUID] = p_trader_ID;
     // time_stamp?
     
     m_order_changed = true;
-    m_orderMatchingThread = std::thread( [&](){ this->matchOrders();});
-    // matchOrders();
+    // m_orderMatchingTask  = std::async( [&](){ this->matchOrders();});
+    matchOrders();
     return m_UUID++;
 }
 
 
-void orderManagement::matchOrders()
+bool orderManagement::matchOrders()
 {
 
+    // no changes in orders
     if (!m_order_changed)
     {
-        // std::cout << "no new orders" << std::endl;
-        return;
+        return false;
     }
     
     // While there are BUY and SELL orders in the queue
@@ -97,13 +100,15 @@ void orderManagement::matchOrders()
             break;
         }
         
-        auto trade_volume = std::min(_sell_order.volume(), _buy_order.volume() );
+        auto trade_volume = std::min(_sell_order.volume(), _buy_order.volume());
         _sell_order.setVolume(_sell_order.volume() - trade_volume);
         _buy_order.setVolume(_buy_order.volume() - trade_volume);
 
-        m_traders[_sell_order.ID()]->onOrderExecution(_sell_order);
-        m_traders[_buy_order.ID()]->onOrderExecution(_buy_order);
-            
+        m_traders[_sell_order.ID()]->onOrderExecution( _sell_order.volume());
+        m_traders[_buy_order.ID()]->onOrderExecution(_buy_order.volume());
+
+        m_totalTradedVolume += trade_volume;
+        m_delegate.publishPublicTrades();
 
         if ( _buy_order.volume() == 0 )
         {
@@ -118,10 +123,11 @@ void orderManagement::matchOrders()
         }
     }
 
+    std::vector<order> _orderbook;
+    _orderbook.reserve(m_sellOrders.size() + m_buyOrders.size() );
+    _orderbook.insert(_orderbook.end(), m_sellOrders.begin(), m_sellOrders.end());
+    _orderbook.insert(_orderbook.end(), m_buyOrders.begin(), m_buyOrders.end());
+    m_delegate.publishOrderBook(_orderbook);
     m_order_changed = false; 
-    m_delegate.publishPublicTrades();
-    // m_delegate.onOrderExecution(_sell_order);
-    // m_delegate.onOrderExecution(_buy_order);
-
-    // send order book
+    return true;
 }

@@ -23,6 +23,7 @@ namespace webbtraders
         //virtual void onPublicTrade() override;
         //  virtual void onTrade() override;
         void publishPublicTrades();
+        void publishOrderBook( const std::vector<order>& p_orderBook );
         
         //! Copy constructor
         // marketData(const marketData &other);

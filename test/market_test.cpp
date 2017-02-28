@@ -15,41 +15,55 @@
 
 
 // ------------- Tests Follow --------------
-BOOST_AUTO_TEST_CASE( orders )
+BOOST_AUTO_TEST_CASE( orders_from_the_tesk )
 {
 
     /*Order 1 Buy 100@12.30
       Order 2 Buy 25@12:15
       Order 3 Buy 10@12.20
     */
-
     
-    BOOST_TEST_MESSAGE("test_message------------------WAIL");
     using namespace webbtraders;
     market _market;
-    auto _trader = _market.addTrader();
+    auto _traderA = _market.addTrader();
+    auto _traderB = _market.addTrader();
+
     
-    _trader->sendOrder(100, 12.30, orderSide::BUY );
-    _trader->sendOrder(25, 12.15, orderSide::BUY );
-    _trader->sendOrder(10, 12.20, orderSide::BUY );
-    _trader->sendOrder(115, 12.17, orderSide::SELL );
+    _traderA->sendOrder(100, 12.30, orderSide::BUY );
+    _traderA->sendOrder(25, 12.15, orderSide::BUY );
+    _traderA->sendOrder(10, 12.20, orderSide::BUY );
+    _traderB->sendOrder(115, 12.17, orderSide::SELL );
     // market.matchOrders(); 
-    
     //Check default constructor
-    BOOST_TEST_MESSAGE("test_message------------------");
-    BOOST_CHECK_EQUAL(2, 2);
+    BOOST_TEST_MESSAGE(_market.getOrderManagement().totalTradedVolume()); 
+    BOOST_CHECK_EQUAL(_market.getOrderManagement().totalTradedVolume(), 110);
 
 }
 
-//Name your test cases for what they test
-BOOST_AUTO_TEST_CASE( assignment )
-{
-    int i = 0;
-    int j = 1;
-  
-    j = i;
-//Use BOOST_CHECK_EQUAL if you want the values to be 
-//printed out if they mismatch
-    BOOST_CHECK_EQUAL(j, i);
-}
+
+// BOOST_AUTO_TEST_CASE( test1 )
+// {
+
+//     /*Order 1 Buy 100@12.30
+//       Order 2 Buy 25@12:15
+//       Order 3 Buy 10@12.20
+//     */
+    
+//     using namespace webbtraders;
+//     market _market;
+//     auto _traderA = _market.addTrader();
+//     auto _traderB = _market.addTrader();
+
+    
+//     _traderA->sendOrder(100, 12.30, orderSide::BUY );
+//     _traderA->sendOrder(25, 12.15, orderSide::BUY );
+//     _traderA->sendOrder(10, 12.20, orderSide::BUY );
+//     //    _traderB->sendOrder(115, 12.17, orderSide::SELL );
+//     // market.matchOrders(); 
+//     //Check default constructor
+//     // BOOST_TEST_MESSAGE("test_message------------------");
+//     BOOST_CHECK_EQUAL(_market.getOrderManagement().totalTradedVolume(), 0);
+
+// }
+
 

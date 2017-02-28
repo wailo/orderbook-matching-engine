@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <unordered_map>
-#include <thread>
+#include <future>
+
 #include "order.hpp"
 
 
@@ -22,10 +23,10 @@ namespace webbtraders
 
         //! Send Order
         //! return true if order request succeed, false otherwise
-        unsigned int createOrder(std::shared_ptr<orderDelegate> p_trader ,unsigned int volume, double price, orderSide side);
+        unsigned int addOrder(std::shared_ptr<orderDelegate> p_trader ,unsigned int volume, double price, orderSide side);
 
         //! Match Orders
-        void matchOrders();
+        bool matchOrders();
     
         //! Copy constructor
         orderManagement(const orderManagement &other) = delete;
@@ -42,19 +43,32 @@ namespace webbtraders
         //! Move assignment operator
         orderManagement& operator=(orderManagement &&other) = delete;
 
+
+        // for unit tests
+        unsigned int totalTradedVolume() const
+            {
+                return m_totalTradedVolume;
+            }
+        
     private:
 
         std::vector<order> m_buyOrders;
         std::vector<order> m_sellOrders;
+        // std::unorder_set<order> m_orderbook;
         unsigned int m_UUID{1};
         marketData& m_delegate;
 
         // <Order_Id, trader>;
-        std::unordered_map< int, std::shared_ptr<orderDelegate> > m_traders;
 
         std::atomic<bool> m_order_changed{false};
-        std::thread m_orderMatchingThread;
+        std::unordered_map< int, std::shared_ptr<orderDelegate> > m_traders;
+        std::future<void> m_orderMatchingTask;
 
+
+
+        // for unit tests
+        unsigned int m_totalTradedVolume{0};
+        
 
 
     };

@@ -9,8 +9,7 @@ using namespace webbtraders;
 
 
 void marketData::subscribe( std::shared_ptr<marketDataDelegate> p_subscriber )
-{
-    m_traders.insert(p_subscriber);
+{    m_traders.insert(p_subscriber);
 }
 
 /*void marketData::onOrderExecution( const order& p_order)
@@ -29,6 +28,15 @@ void marketData::publishPublicTrades()
     }  
 }
 
+
+void marketData::publishOrderBook( const std::vector<order>& p_orderBook )
+{
+    for ( auto& tr : m_traders )
+    {
+        std::cout << "---------------------------" << std::endl;
+        tr->onOrderBook(p_orderBook);
+    }  
+}
 /*void marketData::onTrade()
   {
 

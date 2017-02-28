@@ -11,7 +11,7 @@ set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib )
 
 # used by rtags
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS "-g  -Wall -std=c++14")
+set(CMAKE_CXX_FLAGS "-g  -Wall -std=c++14 -stdlib=libc++")
 
 file(GLOB SOURCES "src/*.cpp")
  

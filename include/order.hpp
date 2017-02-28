@@ -1,6 +1,8 @@
 #ifndef ORDER_H
 #define ORDER_H
 
+#include <iostream>
+
 namespace webbtraders {
 
     enum class orderSide {BUY, SELL};
@@ -31,13 +33,18 @@ namespace webbtraders {
                 return m_ID;
             }
 
-        double price() const
+        int price() const
             {
                 return m_price;
             }
         orderSide side() const
             {
                 return m_side;
+            }
+        
+        std::string sideStr() const
+            {
+                return orderSideToSting(m_side);
             }
         
         int volume() const
@@ -59,13 +66,47 @@ namespace webbtraders {
             {
                 return !operator<(other);
             }
+        
+        std::string orderSideToSting(const orderSide p_side) const
+            {
+                switch (p_side)
+                {
+
+                case orderSide::BUY:
+                    return "BUY";
+                    break;
+
+                case orderSide::SELL:
+                    return "SELL";
+                    break;
+
+                default:
+                    return "UNKNOWN ORDER SIDE";
+                    break ;
+                }
+            }
+
+        // friend std::ostream& operator<<(std::ostream &os, const order& p);
+        friend std::ostream& operator<<(std::ostream &os, const order& p)
+            {
+                os << "Order ID: " << p.m_ID << " Volume: " << p.m_volume << " Price: " << p.m_price << " Side: " << p.sideStr();
+                return os;
+            }
+
     private:
 
         unsigned int m_ID{0};
         int m_volume{0};
-        double m_price{0};
+        int m_price{0};
         orderSide m_side{orderSide::BUY};
+
+        constexpr int price_to_int(const double price)
+            {
+                return 100 * price;
+            }
     };
+
+
 }  // webbtraders
 
 #endif // ORDER_H

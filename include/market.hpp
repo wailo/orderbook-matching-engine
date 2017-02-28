@@ -1,6 +1,6 @@
 #include <memory>
 #include <unordered_map>
-
+#include <numeric>
 
 #include "orderManagement.hpp"
 #include "marketData.hpp"
@@ -65,11 +65,11 @@ namespace webbtraders
 
         // void onOrderExecution(const order& p_order) override;
 
-        //! Order Management API
-        orderManagement m_orderManagement;
-
         //! Market Data API
         marketData m_marketData;
+        
+        //! Order Management API
+        orderManagement m_orderManagement;
 
         std::unordered_map< int, std::shared_ptr<marketDataDelegate> > m_traders;
 
