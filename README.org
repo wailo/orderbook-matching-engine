@@ -9,18 +9,19 @@
  |   4 | Order Management API | Should Send order sell update to the owner of a sell order        |
  |   5 | Order Management API | Should Keep track of active orders                                |
  |   6 | Order Management API | Should Publish order book and public trades using Market Data API |
- |   7 | Contracts            |                                                                   |
- |   8 | Market Data API      | Should send order books to all subscribed clients                 |
- |   9 | Market Data API      | Should send public traders to all subscribed clients              |
- |  10 | Client               | Should send buy order requests to the Order Management API        |
- |  11 | Client               | Should send sell order requests to the Order Management API       |
- |  12 | Client               | Should handle data received from the Market Data API              |
+ |   7 | Order Management API | Publish Book should be sorted by price [requirement from email]   |
+ |   8 | Contracts            | Orders are grouped by contracts, contract is a unique ID          |
+ |   9 | Market Data API      | Should send order books to all subscribed clients                 |
+ |  10 | Market Data API      | Should send public traders to all subscribed clients              |
+ |  11 | Client               | Should send buy order requests to the Order Management API        |
+ |  12 | Client               | Should send sell order requests to the Order Management API       |
+ |  13 | Client               | Should handle data received from the Market Data API              |
  |-----+----------------------+-------------------------------------------------------------------|
 
 ** Sequence Diagram
 
-  #+begin_src plantuml :file tryout.txt :results output silent  :
-  skinparam monochrome true
+  #+begin_src plantuml :file sd.txt :results output silent:
+  ' skinparam monochrome true
   title Matching Engine  Sequence Diagram
 
   create MatchingEngine
@@ -48,7 +49,7 @@
 
   orderManagement -> orderManagement : matchOrders
   activate orderManagement
-  orderManagement -> Trader : onOrderUpdate (if order is matched)
+  orderManagement -> Trader : onOrderExcecution (if order is matched)
   orderManagement -> marketData : onPublicTrades 
   deactivate orderManagement
   activate marketData
@@ -56,34 +57,47 @@
   marketData -> Trader: onPublicTrades
   deactivate marketData
   #+end_src
-  #+INCLUDE: "tryout.txt" src
+
+  #+RESULTS:
+  [[file:sd.txt]]
+
+  #+INCLUDE: "sd.txt" src
+
+** Activity Diagram
+
+#+begin_src plantuml :file ad.txt :results output silent  :
+:First Actor:
+:Another\nactor: as Men2  
+actor Men3
+actor :Last actor: as Men4
+#+end_src
+#+INCLUDE: "ad.txt" src
 
 * Building the solution
 ** Requirements
-   * CMAKE
-   * Clang
+   * CMAKE 3.0
+   * Clang C++14
    * BOOST unit test framework
 ** Steps
-    From the project directory
-    1. cd build
-    2. cmake ..
-    3. make
+    From the project directory, execute the following commands:
+    * cd build
+    * cmake ..
+    * make
     Running the unit tests
-    1. make test
+     make test
 
 * Description
         Assumptions:
-       * Orders matching is proiorties per price as following:
+       * Orders matching is proiortiesed per price as following:
          1. Buy ordres with highest price got matched first.
          2. Sell orders with lowest price got matched first.
-       * Order price comparison epsilon.
-
-
+       * Modification and deletion of orders is not supported.
+       * Price are treated in cents
 * Misc
 ** Choice of container was based on answering the following questions:
-     * Is performance is critical?
+     * Performance is very critical?
        Yes.
-    
+       
      * Sorting required?
        No, only min/max element must be the first item in the container.
     
@@ -93,3 +107,4 @@
      * Insertions/deletions from the container.
        Objects are always appended at the back. No insertion happens in the middle of front of the container.
    
+       

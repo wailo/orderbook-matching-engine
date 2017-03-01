@@ -20,11 +20,11 @@ orderManagement::~orderManagement() noexcept
     // std::cout << "orderManagement destructor" <<std::endl;
 }
 
-unsigned int orderManagement::addOrder(std::shared_ptr<orderDelegate> p_trader_ID, unsigned int volume, double price, orderSide side )
+unsigned int orderManagement::addOrder(std::shared_ptr<orderDelegate> p_trader_ID, int p_volume, double price, orderSide side )
 {
     // Check if the order is valid
     //    
-    if (!volume)
+    if (p_volume < 1 )
     {
         return 0;
     }
@@ -43,12 +43,12 @@ unsigned int orderManagement::addOrder(std::shared_ptr<orderDelegate> p_trader_I
     // Orders are stored in heap    
     if ( side == orderSide::BUY )
     {
-        m_buyOrders.emplace_back(m_UUID, volume, price, side ); 
+        m_buyOrders.emplace_back(m_UUID, p_volume, price, side ); 
         std::push_heap(m_buyOrders.begin(), m_buyOrders.end(), std::less<order>());
     }
     else if ( side == orderSide::SELL )
     {
-        m_sellOrders.emplace_back(m_UUID, volume, price, side); 
+        m_sellOrders.emplace_back(m_UUID, p_volume, price, side); 
         std::push_heap(m_sellOrders.begin(), m_sellOrders.end(), std::greater<order>());
     }
     else
@@ -59,6 +59,8 @@ unsigned int orderManagement::addOrder(std::shared_ptr<orderDelegate> p_trader_I
 
     m_traders[m_UUID] = p_trader_ID;
     // time_stamp?
+
+    m_totalVolume += p_volume;
     
     m_order_changed = true;
     // m_orderMatchingTask  = std::async( [&](){ this->matchOrders();});
@@ -80,21 +82,21 @@ bool orderManagement::matchOrders()
     while ( (!m_buyOrders.empty()) && (!m_sellOrders.empty()) )
     {
 
-        for ( auto b : m_buyOrders )
-        {
-            std::cout << "BUY: " <<b.volume() << " " <<  b.price() << std::endl;
-        }
-        std::cout << std::endl;
+        // for ( auto b : m_buyOrders )
+        // {
+        //     std::cout << "BUY: " <<b.volume() << " " <<  b.price() << std::endl;
+        // }
+        // std::cout << std::endl;
 
-        for ( auto b : m_sellOrders )
-        {
-            std::cout << "SELL: " <<b.volume() << " " <<  b.price() << std::endl;
-        }
+        // for ( auto b : m_sellOrders )
+        // {
+        //     std::cout << "SELL: " <<b.volume() << " " <<  b.price() << std::endl;
+        // }
 
         auto& _buy_order = m_buyOrders.front();
         auto& _sell_order = m_sellOrders.front();
 
-        // If the if the first buy order (with the highest price) in the queue can't be matched 
+        // If the if the highest price buy order  in the queue can't be matched 
         if ( _sell_order.price() > _buy_order.price() )
         {
             break;
@@ -104,8 +106,8 @@ bool orderManagement::matchOrders()
         _sell_order.setVolume(_sell_order.volume() - trade_volume);
         _buy_order.setVolume(_buy_order.volume() - trade_volume);
 
-        m_traders[_sell_order.ID()]->onOrderExecution( _sell_order.volume());
-        m_traders[_buy_order.ID()]->onOrderExecution(_buy_order.volume());
+        m_traders[_sell_order.ID()]->onOrderExecution({_sell_order.ID(), _sell_order.volume()});
+        m_traders[_buy_order.ID()]->onOrderExecution({_buy_order.ID(), _buy_order.volume()});
 
         m_totalTradedVolume += trade_volume;
         m_delegate.publishPublicTrades();

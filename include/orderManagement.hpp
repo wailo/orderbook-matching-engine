@@ -23,7 +23,7 @@ namespace webbtraders
 
         //! Send Order
         //! return true if order request succeed, false otherwise
-        unsigned int addOrder(std::shared_ptr<orderDelegate> p_trader ,unsigned int volume, double price, orderSide side);
+        unsigned int addOrder(std::shared_ptr<orderDelegate> p_trader , int volume, double price, orderSide side);
 
         //! Match Orders
         bool matchOrders();
@@ -50,6 +50,11 @@ namespace webbtraders
                 return m_totalTradedVolume;
             }
         
+        unsigned int totalVolume() const
+            {
+                return m_totalVolume;
+            }
+        
     private:
 
         std::vector<order> m_buyOrders;
@@ -68,6 +73,7 @@ namespace webbtraders
 
         // for unit tests
         unsigned int m_totalTradedVolume{0};
+        unsigned int m_totalVolume{0};
         
 
 

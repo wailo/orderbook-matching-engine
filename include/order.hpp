@@ -28,31 +28,31 @@ namespace webbtraders {
         //! Move assignment operator
         // order& operator=(order &&other) noexcept;
 
-        int ID() const
+        inline unsigned int ID() const
             {
                 return m_ID;
             }
 
-        int price() const
+        inline int price() const
             {
                 return m_price;
             }
-        orderSide side() const
+        inline orderSide side() const
             {
                 return m_side;
             }
         
-        std::string sideStr() const
+        inline std::string sideStr() const
             {
-                return orderSideToSting(m_side);
+                orderSideToSting(m_side);
             }
         
-        int volume() const
+        inline int volume() const
             {
                 return m_volume;
             }
         
-        void setVolume(int p_volume)
+        inline void setVolume(int p_volume)
             {
                 m_volume = p_volume;
             }
