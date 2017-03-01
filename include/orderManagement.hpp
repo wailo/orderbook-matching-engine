@@ -13,7 +13,7 @@ namespace webbtraders
 
     class marketData;
     class orderDelegate;
-    // class marketDataDelegate;
+    class orderBook;
     
     class orderManagement
     {
@@ -23,10 +23,10 @@ namespace webbtraders
 
         //! Send Order
         //! return true if order request succeed, false otherwise
-        unsigned int addOrder(std::shared_ptr<orderDelegate> p_trader , int volume, double price, orderSide side);
+        unsigned int addOrder(std::shared_ptr<orderDelegate> p_trader, unsigned int p_contractID, int volume, double price, orderSide side);
 
         //! Match Orders
-        bool matchOrders();
+        bool matchOrders(unsigned int p_contactID);
     
         //! Copy constructor
         orderManagement(const orderManagement &other) = delete;
@@ -57,8 +57,8 @@ namespace webbtraders
         
     private:
 
-        std::vector<order> m_buyOrders;
-        std::vector<order> m_sellOrders;
+        // std::vector<order> m_buyOrders;
+        //  std::vector<order> m_sellOrders;
         // std::unorder_set<order> m_orderbook;
         unsigned int m_UUID{1};
         marketData& m_delegate;
@@ -66,10 +66,8 @@ namespace webbtraders
         // <Order_Id, trader>;
 
         std::atomic<bool> m_order_changed{false};
-        std::unordered_map< int, std::shared_ptr<orderDelegate> > m_traders;
         std::future<void> m_orderMatchingTask;
-
-
+        std::unordered_map<unsigned int, orderBook > m_orderBooks;
 
         // for unit tests
         unsigned int m_totalTradedVolume{0};

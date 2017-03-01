@@ -3,6 +3,7 @@
 
 #include "trader.hpp"
 #include "market.hpp"
+#include "orderBook.hpp"
 
 using namespace webbtraders;
 
@@ -15,18 +16,33 @@ trader::trader(market& p_market) noexcept
 {
 }
 
-void trader::onOrderBook( const std::vector<order>& p_orderBook )
+void trader::onOrderBook(const orderBook& p_orderBook )
 {
-
-    // std::cout << "onOrderBook, ID:" << m_ID << std::endl;
-    // for ( const auto& it : p_orderBook )
-    // {
-    //     std::cout << it << std::endl;
-    // }
-
+    
+    /*
+      const auto& buys  = p_orderBook.getBuyOrdersSorted();
+      const auto& sells  = p_orderBook.getSellOrdersSorted();
+    
+      std::cout << "onOrderBook, Buys:"  << std::endl;
+      for (const auto& it : buys)
+      {
+      std::cout << it << std::endl;
+      }
+      std::cout << "onOrderBook, Sells:"  << std::endl;
+      for (const auto& it : sells)
+      {
+      std::cout << it << std::endl;
+      }
+    */
+    
 }
-void trader::onPublicTrade() 
+void trader::onPublicTrade(const tradeData& p_tradeData) 
 {
+    std::cout << "onPublicTrade: "  <<
+        "ID:" << p_tradeData.m_ID << " " <<
+        "State:"   << p_tradeData.orderExecutionStateToString() << " " <<
+        "Active Volume:" << p_tradeData.m_activeVolume << std::endl; 
+
     // std::cout << "onPublicTrade, ID:" << m_ID << std::endl;
 }
 
@@ -37,16 +53,16 @@ void trader::onPublicTrade()
   }
 */
 
-bool trader::sendOrder( int p_volume, double p_price, orderSide p_side )
+bool trader::sendOrder(unsigned int p_contractID, int p_volume, double p_price, orderSide p_side)
 {
-    return m_orderManagement.addOrder(std::make_shared<trader>(*this), p_volume, p_price, p_side);   
+    return m_orderManagement.addOrder(std::make_shared<trader>(*this), p_contractID, p_volume, p_price, p_side);   
 }
 
 
-void trader::onOrderExecution(const orderExecution& p_orderExecution)
+void trader::onOrderExecution(const tradeData& p_tradeData)
 {
     std::cout << "onOrderExecution: "  <<
-        "ID:" << p_orderExecution.m_ID << " " <<
-        "State:"   << p_orderExecution.orderExecutionStateToString() << " " <<
-        "Active Volume:" << p_orderExecution.m_activeVolume << std::endl;
+        "ID:" << p_tradeData.m_ID << " " <<
+        "State:"   << p_tradeData.orderExecutionStateToString() << " " <<
+        "Active Volume:" << p_tradeData.m_activeVolume << std::endl;
 }

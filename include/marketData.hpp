@@ -10,7 +10,8 @@
 namespace webbtraders
 {
 
-    // enum class OrderRequestStatus
+    class tradeData;
+    
     class marketData
     {
     public:
@@ -18,12 +19,12 @@ namespace webbtraders
         marketData() = default;
 
         // void logOrder( unsgined int p_order_ID,  );
-        void subscribe( std::shared_ptr<marketDataDelegate> p_subscriber );
+        void subscribe(std::shared_ptr<marketDataDelegate> p_subscriber);
         // virtual void onOrderExecution(const order& p_order) override;
         //virtual void onPublicTrade() override;
         //  virtual void onTrade() override;
-        void publishPublicTrades();
-        void publishOrderBook( const std::vector<order>& p_orderBook );
+        void publishPublicTrades(const tradeData& p_tradeData);
+        void publishOrderBook(const orderBook& p_orderBook);
         
         //! Copy constructor
         // marketData(const marketData &other);

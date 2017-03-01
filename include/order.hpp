@@ -5,13 +5,16 @@
 
 namespace webbtraders {
 
+    // class orderDelegate;
+    
     enum class orderSide {BUY, SELL};
+    class orderDelegate;
     class order
     {
     public:
 
         //! Default constructor
-        order(unsigned int p_ID, int p_volume, double p_price, orderSide p_side) noexcept;
+        order(unsigned int p_contractID, unsigned int p_ID, int p_volume, double p_price, orderSide p_side, const std::shared_ptr<orderDelegate>& p_owner) noexcept;
 
         //! Copy constructor
         // order(const order &other);
@@ -33,6 +36,11 @@ namespace webbtraders {
                 return m_ID;
             }
 
+        inline unsigned int contractID() const
+            {
+                return m_contractID;
+            }
+        
         inline int price() const
             {
                 return m_price;
@@ -44,30 +52,35 @@ namespace webbtraders {
         
         inline std::string sideStr() const
             {
-                orderSideToSting(m_side);
+                return orderSideToSting(m_side);
             }
         
         inline int volume() const
             {
                 return m_volume;
             }
-        
-        inline void setVolume(int p_volume)
+
+        inline const std::shared_ptr<orderDelegate>& owner() const
             {
-                m_volume = p_volume;
+                return m_owner;
             }
 
-        bool operator<( const order& other) const
+        inline void setVolume(int p_volume)
+            {
+                m_volume = p_volume; 
+            }
+
+        inline bool operator<( const order& other) const
             {
                 return m_price < other.m_price;
             }
         
-        bool operator>( const order& other) const
+        inline bool operator>( const order& other) const
             {
                 return !operator<(other);
             }
         
-        std::string orderSideToSting(const orderSide p_side) const
+        inline std::string orderSideToSting(const orderSide p_side) const
             {
                 switch (p_side)
                 {
@@ -96,11 +109,12 @@ namespace webbtraders {
     private:
 
         unsigned int m_ID{0};
+        unsigned int m_contractID{0};
         int m_volume{0};
         int m_price{0};
         orderSide m_side{orderSide::BUY};
-
-        constexpr int price_to_int(const double price)
+        std::shared_ptr<orderDelegate> m_owner{nullptr};
+        constexpr int price_to_cents(const double price)
             {
                 return 100 * price;
             }
