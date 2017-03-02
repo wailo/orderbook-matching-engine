@@ -12,7 +12,7 @@ unsigned int trader::m_counter = 0;
 
 trader::trader(market& p_market) noexcept
     :m_ID(m_counter++),
-     m_orderManagement(p_market.getOrderManagement())
+     m_market(p_market)
 {
 }
 
@@ -38,12 +38,10 @@ void trader::onOrderBook(const orderBook& p_orderBook )
 }
 void trader::onPublicTrade(const tradeData& p_tradeData) 
 {
-    std::cout << "onPublicTrade: "  <<
-        "ID:" << p_tradeData.m_ID << " " <<
-        "State:"   << p_tradeData.orderExecutionStateToString() << " " <<
-        "Active Volume:" << p_tradeData.m_activeVolume << std::endl; 
-
-    // std::cout << "onPublicTrade, ID:" << m_ID << std::endl;
+    // std::cout << "onPublicTrade: "  <<
+    //     "ID:" << p_tradeData.m_ID << " " <<
+    //     "State:"   << p_tradeData.orderExecutionStateToString() << " " <<
+    //     "Active Volume:" << p_tradeData.m_activeVolume << std::endl; 
 }
 
 /*
@@ -55,14 +53,14 @@ void trader::onPublicTrade(const tradeData& p_tradeData)
 
 bool trader::sendOrder(unsigned int p_contractID, int p_volume, double p_price, orderSide p_side)
 {
-    return m_orderManagement.addOrder(std::make_shared<trader>(*this), p_contractID, p_volume, p_price, p_side);   
+    return m_market.addOrder(std::make_shared<trader>(*this), p_contractID, p_volume, p_price, p_side);   
 }
 
 
 void trader::onOrderExecution(const tradeData& p_tradeData)
 {
-    std::cout << "onOrderExecution: "  <<
-        "ID:" << p_tradeData.m_ID << " " <<
-        "State:"   << p_tradeData.orderExecutionStateToString() << " " <<
-        "Active Volume:" << p_tradeData.m_activeVolume << std::endl;
+    // std::cout << "onOrderExecution: "  <<
+    //     "ID:" << p_tradeData.m_ID << " " <<
+    //     "State:"   << p_tradeData.orderExecutionStateToString() << " " <<
+    //     "Active Volume:" << p_tradeData.m_activeVolume << std::endl;
 }

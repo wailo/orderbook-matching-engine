@@ -35,10 +35,7 @@ namespace webbtraders
         unsigned int m_ID{0};
         int m_activeVolume{0};
         orderExecutionState m_state;
-    };
-
-    
-    
+    }; 
 
 }  // webbtraders
 

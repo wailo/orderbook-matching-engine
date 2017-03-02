@@ -3,10 +3,9 @@
 
 #include <iostream>
 
-namespace webbtraders {
-
-    // class orderDelegate;
-    
+namespace webbtraders
+{
+    // class orderDelegate; 
     enum class orderSide {BUY, SELL};
     class orderDelegate;
     class order
@@ -14,6 +13,7 @@ namespace webbtraders {
     public:
 
         //! Default constructor
+        order() = default;
         order(unsigned int p_contractID, unsigned int p_ID, int p_volume, double p_price, orderSide p_side, const std::shared_ptr<orderDelegate>& p_owner) noexcept;
 
         //! Copy constructor

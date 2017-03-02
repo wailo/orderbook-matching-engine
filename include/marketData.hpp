@@ -23,7 +23,7 @@ namespace webbtraders
         // virtual void onOrderExecution(const order& p_order) override;
         //virtual void onPublicTrade() override;
         //  virtual void onTrade() override;
-        void publishPublicTrades(const tradeData& p_tradeData);
+        void publishPublicTrade(const tradeData& p_tradeData);
         void publishOrderBook(const orderBook& p_orderBook);
         
         //! Copy constructor

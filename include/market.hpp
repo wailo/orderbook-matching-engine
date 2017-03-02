@@ -16,7 +16,7 @@ namespace webbtraders
         market() noexcept;
 
         //! Destructor
-        ~market() = default;
+        ~market();
 
         //! Copy assignment operator
         market& operator=(const market &other) = delete;
@@ -54,6 +54,10 @@ namespace webbtraders
                     return false;
                 }
                 }*/
+        bool addOrder(const std::shared_ptr<orderDelegate>& p_trader, unsigned int p_contractID, int p_volume, double p_price, orderSide p_side );
+
+        
+        void waitForAllExecutions();
         // bool createOrder(unsigned int p_trader_ID ,unsigned int volume, double price, orderSide side);
     private:
 
@@ -67,11 +71,15 @@ namespace webbtraders
 
         //! Market Data API
         marketData m_marketData;
+
+        std::unordered_map< int, std::shared_ptr<marketDataDelegate> > m_traders;
         
         //! Order Management API
         orderManagement m_orderManagement;
 
-        std::unordered_map< int, std::shared_ptr<marketDataDelegate> > m_traders;
+        std::vector<std::future<bool>> m_orderMatchingTasks; 
+        //std::future<bool> m_orderMatchingTask;
+
 
         // std::unordered_set<unsigned int> m_traders;
     };

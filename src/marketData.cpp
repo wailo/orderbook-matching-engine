@@ -20,7 +20,7 @@ void marketData::subscribe(std::shared_ptr<marketDataDelegate> p_subscriber)
   }*/
 
 
-void marketData::publishPublicTrades(const tradeData& p_tradeData)
+void marketData::publishPublicTrade(const tradeData& p_tradeData)
 {
     for ( auto& tr : m_traders )
     {

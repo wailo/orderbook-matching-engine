@@ -2,32 +2,34 @@
 
 #include "market.hpp"
 #include "trader.hpp"
-using namespace webbtraders;
+#include "orderBook.hpp"
 
+using namespace webbtraders;
 
 market::market() noexcept
     : m_orderManagement(m_marketData)
+{}
+
+market::~market()
 {
+     waitForAllExecutions();
 }
 
 
-/*bool market::createOrder(unsigned int p_trader_ID ,unsigned int p_volume, double p_price, orderSide p_side)
-  {
-  Auto orderID = m_orderManagement.createOrder(p_trader_ID, p_volume, p_price, p_side );
+bool market::addOrder(const std::shared_ptr<orderDelegate>& p_trader, unsigned int p_contractID, int p_volume, double p_price, orderSide p_side )
+{
+    
+    auto res = m_orderManagement.addOrder(p_trader, p_contractID, p_volume, p_price, p_side );
 
-  if ( orderID )
-  {
-  // m_traders[orderID] = p_trader;
-  // m_marketData.logOrder(m_traders[orderID], );
-  m_orderManagement.matchOrders(); 
-  return true;
-  }
+    if ( res )
+    {
+        //   std::cout << "market added order" << std::endl;
 
-  else
-  {
-  return false;
-  }
-  }*/
+        m_orderMatchingTasks.emplace_back(std::async(std::launch::async, [&](){ return m_orderManagement.matchOrders(0);}) );
+    }
+
+    return res;
+}
 
 std::shared_ptr<trader> market::addTrader()
 {
@@ -41,3 +43,13 @@ orderManagement& market::getOrderManagement()
     return m_orderManagement;
 }
 
+void market::waitForAllExecutions()
+{
+    while (!m_orderMatchingTasks.empty())
+    {
+        m_orderMatchingTasks.back().wait();
+        m_orderMatchingTasks.pop_back();
+    }
+    
+    // m_orderMatchingTask.get();
+}

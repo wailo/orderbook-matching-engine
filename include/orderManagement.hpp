@@ -6,7 +6,7 @@
 #include <future>
 
 #include "order.hpp"
-
+#include "MTQueue.hpp"
 
 namespace webbtraders
 {
@@ -19,6 +19,8 @@ namespace webbtraders
     {
     public:
         //! Default constructor
+
+        //! Constructor
         orderManagement(marketData& p_delegate) noexcept;
 
         //! Send Order
@@ -35,7 +37,7 @@ namespace webbtraders
         orderManagement(orderManagement &&other) = delete;
 
         //! Destructor
-        ~orderManagement() noexcept;
+        ~orderManagement() = default;
         
         //! Copy assignment operator
         orderManagement& operator=(const orderManagement &other) = delete;
@@ -45,12 +47,12 @@ namespace webbtraders
 
 
         // for unit tests
-        unsigned int totalTradedVolume() const
+        inline unsigned int totalTradedVolume() const
             {
                 return m_totalTradedVolume;
             }
         
-        unsigned int totalVolume() const
+        inline unsigned int totalVolume() const
             {
                 return m_totalVolume;
             }
@@ -65,16 +67,12 @@ namespace webbtraders
 
         // <Order_Id, trader>;
 
-        std::atomic<bool> m_order_changed{false};
-        std::future<void> m_orderMatchingTask;
         std::unordered_map<unsigned int, orderBook > m_orderBooks;
 
         // for unit tests
         unsigned int m_totalTradedVolume{0};
         unsigned int m_totalVolume{0};
-        
-
-
+        LockFreeQueue<order> m_queue;
     };
 }  // webbtraders
 
