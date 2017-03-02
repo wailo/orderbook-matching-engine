@@ -11,109 +11,113 @@
 
 using namespace webbtraders;
 
-
 orderManagement::orderManagement(marketData& p_delegate) noexcept
     :m_delegate(p_delegate)
 {
 }
 
-// orderManagement::~orderManagement() noexcept 
-// {
-//     std::cout << "orderManagement destructor" <<std::endl;
-// }
-
-unsigned int orderManagement::addOrder(std::shared_ptr<orderDelegate> p_trader, unsigned int p_contractID, int p_volume, double price, orderSide side )
+bool orderManagement::addOrder(std::shared_ptr<orderDelegate> p_trader, unsigned int p_contractID, int p_volume, double price, orderSide side )
 {
-    // Check if the order is valid
-    if (p_volume < 1 )
+  // Check if the order is valid
+  if (p_volume < 1 )
+  {
+    return false;
+  }
+
+
+  // If queue is full, wait for an arbitrary time.
+  uint64_t wait_time = 1000000; 
+  uint64_t start = 0;
+  while ( !m_queue.write_available() )
+  {
+    if (start++ > wait_time)
     {
-        return 0;
+      // std::cout << "failed to add order" << std::endl;
+      return false;
     }
+  }
+  
+  m_queue. push(order(p_contractID, m_UUID, p_volume, price, side, p_trader));
+  m_totalVolume += p_volume;
 
-    // std::cout << " order added " << std::endl;
-    const order _order(p_contractID, m_UUID, p_volume, price, side, p_trader);
-    m_queue.Produce(_order);
-    m_totalVolume += p_volume;
-
-    //  matchOrders(p_contractID);
-    
-    //     m_orderMatchingTask  = std::async( [&](){ return this->matchOrders(0);});
-    
-    return m_UUID++;
+  return true;
 }
 
 
-bool orderManagement::matchOrders(unsigned int _p_contractID)
+bool orderManagement::matchOrders()
 {
-    order _order;
-    bool new_orders_flag{false};
-    std::unordered_set<unsigned int> contractIDs;
-    while (m_queue.Consume(_order))
+
+  // If there are no data, return
+  if (!m_queue.read_available())
+  {
+      return false;
+  }
+  
+  order _order;
+  std::unordered_set<unsigned int> contractIDs;
+  while (m_queue.pop(_order))
+  {
+    // Add order to the order book
+    contractIDs.insert(_order.contractID());
+    m_orderBooks[_order.contractID()].addOrder(_order);
+  }
+
+  for(auto& _contractID : contractIDs )
+  {        
+
+    auto orderBookItr = m_orderBooks.find(_contractID);
+    if ( orderBookItr == m_orderBooks.end() )
     {
-        // Add order to the order book
-        contractIDs.insert(_order.contractID());
-        m_orderBooks[_order.contractID()].addOrder(_order);
-        new_orders_flag = true;
+      // Integrity check: If no order book available with the given contract number
+      // then there is something wrong here
+      return false;
+    } 
+        
+    auto& m_buyOrders = orderBookItr->second.m_buyOrders;
+    auto& m_sellOrders = orderBookItr->second.m_sellOrders;
+        
+    // While there are BUY and SELL orders in the queue
+    // And the highest price of buy order can be matched 
+    while ((!m_buyOrders.empty()) && (!m_sellOrders.empty()) &&
+           m_buyOrders.front().price() >= m_sellOrders.front().price())
+    {
+
+      auto& _buy_order = m_buyOrders.front();
+      auto& _sell_order = m_sellOrders.front();
+      
+      // Calculate and update trade volumes
+      auto trade_volume = std::min(_sell_order.volume(), _buy_order.volume());
+      _sell_order.setVolume(_sell_order.volume() - trade_volume);
+      _buy_order.setVolume(_buy_order.volume() - trade_volume);
+      
+      // Notify the order owners
+      _sell_order.owner()->onOrderExecution({_contractID, _sell_order.ID(), trade_volume, _buy_order.price()});
+      _buy_order.owner()->onOrderExecution({_contractID, _buy_order.ID(), trade_volume, _buy_order.price()});
+
+      // Increment internal counter (for testing purposes)
+      m_totalTradedVolume += trade_volume;
+
+      // Publish public trades
+      m_delegate.publishPublicTrade({_contractID, _buy_order.ID(), trade_volume, _buy_order.price()});
+
+      // Remove filled orders
+      if ( _buy_order.volume() == 0 )
+      {
+        std::pop_heap(m_buyOrders.begin(), m_buyOrders.end(), std::less<order>());
+        m_buyOrders.pop_back();
+      }
+
+      if ( _sell_order.volume() == 0 )
+      {
+        std::pop_heap(m_sellOrders.begin(), m_sellOrders.end(), std::greater<order>());
+        m_sellOrders.pop_back();
+      }
     }
 
-    if (!new_orders_flag)
-    {
-        return false;
-    }
+    // Publish order book
+    m_delegate.publishOrderBook(orderBookItr->second);
 
+  }
 
-    for(auto& p_contractID : contractIDs )
-    {
-        // std::cout << "Matching orders: " << p_contractID <<  std::endl;
-        
-        // If no order book available with the given contract number
-        auto orderBookItr = m_orderBooks.find(p_contractID);
-        if ( orderBookItr == m_orderBooks.end() )
-        {
-            return false;
-        } 
-        
-        auto& m_buyOrders = orderBookItr->second.m_buyOrders;
-        auto& m_sellOrders = orderBookItr->second.m_sellOrders;
-        
-        // While there are BUY and SELL orders in the queue
-        while ( (!m_buyOrders.empty()) && (!m_sellOrders.empty()) )
-        {
-            auto& _buy_order = m_buyOrders.front();
-            auto& _sell_order = m_sellOrders.front();
-
-            // If the if the highest price buy order  in the queue can't be matched 
-            if ( _sell_order.price() > _buy_order.price() )
-            {
-                break;
-            }
-        
-            auto trade_volume = std::min(_sell_order.volume(), _buy_order.volume());
-            _sell_order.setVolume(_sell_order.volume() - trade_volume);
-            _buy_order.setVolume(_buy_order.volume() - trade_volume);
-
-            _sell_order.owner()->onOrderExecution({_sell_order.ID(), _sell_order.volume()});
-            _buy_order.owner()->onOrderExecution({_buy_order.ID(), _buy_order.volume()});
-
-            m_totalTradedVolume += trade_volume;
-            //  m_delegate.publishPublicTrade({_buy_order.ID(), _buy_order.volume()});
-
-            if ( _buy_order.volume() == 0 )
-            {
-                std::pop_heap(m_buyOrders.begin(), m_buyOrders.end(), std::less<order>());
-                m_buyOrders.pop_back();
-            }
-
-            if ( _sell_order.volume() == 0 )
-            {
-                std::pop_heap(m_sellOrders.begin(), m_sellOrders.end(), std::greater<order>());
-                m_sellOrders.pop_back();
-            }
-        }
-
-        m_delegate.publishOrderBook(orderBookItr->second);
-
-    }
-
-    return true;
+  return true;
 }
