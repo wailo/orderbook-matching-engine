@@ -3,6 +3,7 @@
 #include "trader.hpp"
 #include "matchingEngine.hpp"
 #include "orderBook.hpp"
+#include "order.hpp"
 
 using namespace webbtraders;
 
@@ -15,7 +16,12 @@ trader::trader(matchingEngine& p_market) noexcept
 {}
 
 void trader::onOrderBook(const orderBook& p_orderBook )
-{    
+{
+  if (onOrderBookCallBack)
+  {
+    onOrderBookCallBack(p_orderBook);
+  }
+  
   /*
     const auto& buys  = p_orderBook.getBuyOrdersSorted();
     const auto& sells  = p_orderBook.getSellOrdersSorted();
@@ -35,6 +41,11 @@ void trader::onOrderBook(const orderBook& p_orderBook )
 
 void trader::onPublicTrade(const tradeData& p_tradeData) 
 {
+  if (onPublicTradeCallBack)
+  {
+    onPublicTradeCallBack(p_tradeData);
+  }
+  
   // std::cout << "onPublicTrade: "  <<
   //     "ID:" << p_tradeData.m_ID << " " <<
   //     "State:"   << p_tradeData.orderExecutionStateToString() << " " <<
@@ -49,8 +60,28 @@ bool trader::sendOrder(unsigned int p_contractID, int p_volume, double p_price, 
 
 void trader::onOrderExecution(const tradeData& p_tradeData)
 {
+  if (onOrderExecutionCallBack)
+  {
+    onOrderExecutionCallBack(p_tradeData);
+  }
   // std::cout << "onOrderExecution: "  <<
   //     "ID:" << p_tradeData.m_ID << " " <<
   //     "State:"   << p_tradeData.orderExecutionStateToString() << " " <<
   //     "Active Volume:" << p_tradeData.m_activeVolume << std::endl;
+}
+
+
+void trader::setOnOrderExecutionCallBack (std::function<void(const tradeData&)> p_func)
+{
+  onOrderExecutionCallBack = p_func;
+}
+
+void trader::setOnPublicTradeCallBack (std::function<void(const tradeData&)> p_func)
+{
+  onPublicTradeCallBack = p_func;
+}
+
+void trader::setOnOrderBookCallBack (std::function<void(const orderBook&)> p_func)
+{
+  onOrderBookCallBack = p_func;
 }

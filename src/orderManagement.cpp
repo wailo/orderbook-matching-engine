@@ -50,7 +50,7 @@ bool orderManagement::matchOrders()
   // If there are no data, return
   if (!m_queue.read_available())
   {
-      return false;
+    return false;
   }
   
   order _order;

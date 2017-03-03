@@ -7,17 +7,16 @@ project (matching_engine)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
-set(LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib )
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib )
 
 # used by rtags
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_FLAGS "-g  -Wall -std=c++14 -stdlib=libc++")
+# -g for lldb debugging
+set(CMAKE_CXX_FLAGS "-g -Wall -std=c++14 -stdlib=libc++")
 
 file(GLOB SOURCES "src/*.cpp")
  
-#add_executable(matching_engine ${SOURCES})
 add_library(libmatching_engine SHARED ${SOURCES})
-
 
 enable_testing()
 find_package(Boost 1.60 COMPONENTS unit_test_framework)
@@ -38,12 +37,12 @@ foreach(testSrc ${TEST_SRCS})
 
   # move testing binaries into a testBin directory
   set_target_properties(${testName} PROPERTIES 
-    RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/testBin)
+    RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
   #Add it to test execution - 
   add_test(NAME ${testName} 
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/testBin 
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/testBin/${testName} --log_level=message )
+    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} 
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${testName})
 endforeach(testSrc)
 
 

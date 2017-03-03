@@ -3,11 +3,13 @@
 
 #include "matchingEngine.hpp"
 #include "trader.hpp"
+#include "orderBook.hpp"
 
 //Define our Module name (prints at testing)
 #define BOOST_TEST_MODULE "BaseClassModule"
 #include <boost/test/unit_test.hpp>
 
+// dummy representation of order contracts
 enum contract { IBM, APPLE };
 
 BOOST_AUTO_TEST_CASE(adding_valid_orders)
@@ -112,6 +114,23 @@ BOOST_AUTO_TEST_CASE(orders_example_from_the_task)
   auto _traderA = _market.addTrader();
   auto _traderB = _market.addTrader();
 
+  _traderA->setOnOrderBookCallBack([](const orderBook& p_orderBook) {
+      
+      const auto& buys  = p_orderBook.getBuyOrdersSorted();
+      const auto& sells  = p_orderBook.getSellOrdersSorted();
+    
+      std::cout << "onOrderBook, Buys:"  << std::endl;
+      for (const auto& it : buys)
+      {
+        std::cout << it << std::endl;
+      }
+      std::cout << "onOrderBook, Sells:"  << std::endl;
+      for (const auto& it : sells)
+      {
+        std::cout << it << std::endl;
+      }
+      //  std::cout << "orderBook Called" << std::endl;
+    });
     
   _traderA->sendOrder(IBM, 100, 12.30, orderSide::BUY );
   _traderA->sendOrder(IBM, 25, 12.15, orderSide::BUY );
@@ -166,6 +185,3 @@ BOOST_AUTO_TEST_CASE(multi_thread_test)
     
   BOOST_CHECK_EQUAL(true, true);
 }
-
-
-
