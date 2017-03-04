@@ -7,8 +7,8 @@
 
 namespace webbtraders
 {
+
 class matchingEngine;
-// class orderManagement;
 class orderBook;
 enum class orderSide;
 
@@ -21,29 +21,22 @@ class trader :
 
   //! Default constructor
   trader(matchingEngine& p_market) noexcept;
-        
-  //   template<typename... Args>
-  // bool sendOrder(Args... args);
+
+  //! Send Order,  return true if order request succeed, false otherwise
   bool sendOrder(unsigned int p_contractID, int p_volume, double p_price, orderSide p_side);
-
-  //! Copy constructorx
-  //  trader(const trader &other);
-
-  //! Move constructor
-  // trader(trader &&other);
 
   //! Destructor
   ~trader() = default;
 
-  //! Copy assignment operator
-  // trader& operator=(const trader &other);
-
-  //! Move assignment operator
-  // trader& operator=(trader &&other) noexcept;
-
+  //! Set a function to be invoked when order execution update is received.
   void setOnOrderExecutionCallBack (std::function<void(const tradeData&)>);
+
+  //! Set a function to be invoked when public trade update is received.
   void setOnPublicTradeCallBack (std::function<void(const tradeData&)>);
+
+  //! Set a function to be invoked when order book update is received.
   void setOnOrderBookCallBack (std::function<void(const orderBook&)>);
+
  private:
 
   //! Trader unique ID
@@ -64,9 +57,13 @@ class trader :
   //! Function called when orderBook update is received
   virtual void onOrderBook( const orderBook& p_orderBook ) override;
 
-
+  //! Function callback for order execution updates
   std::function<void(const tradeData&)> onOrderExecutionCallBack;
+
+  //! Function callback for public trade updates
   std::function<void(const tradeData&)> onPublicTradeCallBack;
+
+  //! Function callback for order book updates
   std::function<void(const orderBook&)> onOrderBookCallBack;
 
 };

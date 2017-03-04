@@ -1,110 +1,292 @@
-* System 
-** Requirements:
- |-----+----------------------+-------------------------------------------------------------------|
- | ID# | Application          | Description                                                       |
- |-----+----------------------+-------------------------------------------------------------------|
- |   1 | Order Management API | Should Receive order requests from a client                       |
- |   2 | Order Management API | Should Matches/executes orders                                    |
- |   3 | Order Management API | Should Send order buy update to the owner of a buy order          |
- |   4 | Order Management API | Should Send order sell update to the owner of a sell order        |
- |   5 | Order Management API | Should Keep track of active orders                                |
- |   6 | Order Management API | Should Publish order book and public trades using Market Data API |
- |   7 | Order Management API | Publish Book should be sorted by price [requirement from email]   |
- |   8 | Contracts            | Orders are grouped by contracts, contract is a unique ID          |
- |   9 | Market Data API      | Should send order books to all subscribed clients                 |
- |  10 | Market Data API      | Should send public traders to all subscribed clients              |
- |  11 | Client               | Should send buy order requests to the Order Management API        |
- |  12 | Client               | Should send sell order requests to the Order Management API       |
- |  13 | Client               | Should handle data received from the Market Data API              |
- |-----+----------------------+-------------------------------------------------------------------|
+#+OPTIONS: html-postamble:nil
 
-** Sequence Diagram
+* Introduction
+This project is a basic implementation of a market data matching engine. The matching engine allows a client to create an order, send it to a market and then receive market data.
+The engine use multi threads to enable sending orders request at high throughput.
+ The solution is developed and tested in Mac OS X, using Clang 4.2.1 and BOOST 1.68
 
-  #+begin_src plantuml :file sd.txt :results output silent:
-  ' skinparam monochrome true
-  title Matching Engine  Sequence Diagram
-
-  create MatchingEngine
-
-  activate MatchingEngine
-  [o-> MatchingEngine : create
-  create orderManagement
-  MatchingEngine -> orderManagement : creates
-  create marketData
-  MatchingEngine -> marketData : creates
-  deactivate MatchingEngine
-
-
-  [o-> MatchingEngine : addTrader
-  activate MatchingEngine
-  create Trader
-  MatchingEngine -> Trader : creates
-  <-MatchingEngine: return handle to trader
-  deactivate MatchingEngine
-
-  Trader -> orderManagement : createOrder
-  activate orderManagement
-  orderManagement -> Trader :
-  deactivate orderManagement
-
-  orderManagement -> orderManagement : matchOrders
-  activate orderManagement
-  orderManagement -> Trader : onOrderExcecution (if order is matched)
-  orderManagement -> marketData : onPublicTrades 
-  deactivate orderManagement
-  activate marketData
-
-  marketData -> Trader: onPublicTrades
-  deactivate marketData
-  #+end_src
-
-  #+RESULTS:
-  [[file:sd.txt]]
-
-  #+INCLUDE: "sd.txt" src
-
-** Activity Diagram
-
-#+begin_src plantuml :file ad.txt :results output silent  :
-:First Actor:
-:Another\nactor: as Men2  
-actor Men3
-actor :Last actor: as Men4
-#+end_src
-#+INCLUDE: "ad.txt" src
-
-* Building the solution
+* Building the Solution
 ** Requirements
    * CMAKE 3.0
    * Clang C++14
    * BOOST unit test framework
 ** Steps
     From the project directory, execute the following commands:
-    * cd build
-    * cmake ..
-    * make
+    #+BEGIN_SRC
+    cd build
+    cmake ..
+    make
+#+END_SRC
     Running the unit tests
-     make test
+    #+BEGIN_SRC
+    make test
+#+END_SRC
+* Technical Content
 
-* Description
-        Assumptions:
-       * Orders matching is proiortiesed per price as following:
-         1. Buy ordres with highest price got matched first.
-         2. Sell orders with lowest price got matched first.
-       * Modification and deletion of orders is not supported.
-       * Price are treated in cents
-* Misc
-** Choice of container was based on answering the following questions:
-     * Performance is very critical?
-       Yes.
-       
-     * Sorting required?
-       No, only min/max element must be the first item in the container.
+** Task breakdown
+  Basic operation of the matching engine requires the following functionalities:
+  1. Matching algorithm, that matches a buy bid with the highest price to an ask bid with the lowest price.
+  2. Asynchronous order matching so the engine is always available to receive order requests.
+  3. Notification engine to notify participated parties when there is updates.
+  4. Updates should be customizable, so clients can post process data with minimal effort.
+
+** Scope of the task
+ The following system requirements define the scope of the task:
+ #+ATTR_HTML: :border 2 :rules all :frame border
+  |-----+----------------------+-------------------------------------------------------------------------------|
+  | ID# | Application          | Description                                                                   |
+  |-----+----------------------+-------------------------------------------------------------------------------|
+  |   1 | Order Management API | Should Matches/executes orders                                                |
+  |   2 | Order Management API | Should Send order buy update to the owner of a buy order                      |
+  |   3 | Order Management API | Should Send order sell update to the owner of a sell order                    |
+  |   4 | Order Management API | Should Keep track of active orders                                            |
+  |   5 | Order Management API | Should Publish order book and public trades using Market Data API             |
+  |   6 | Order Management API | Should sort order book by price [requirement from email]                      |
+  |   7 | Client (trader)      | Should send buy order requests to the Order Management API                    |
+  |   8 | Client (trader)      | Should send sell order requests to the Order Management API                   |
+  |   9 | Client (trader)      | Should handle data received from the Market Data API and Order Management API |
+  |  10 | Order                | Should store: Contract ID, Unique order ID, Price, Volume, Side,              |
+  |  11 | Order                | Orders are grouped by contracts, contract is a unique ID                      |
+  |  12 | Market Data API      | Should send order books to all subscribed clients                             |
+  |  13 | Market Data API      | Should send public traders to all subscribed clients                          |
+  |  14 | Matching Engine API  | Provide public interface to the client                                        |
+  |  15 | Matching Engine API  | Should Receive order requests from client                                     |
+  |-----+----------------------+-------------------------------------------------------------------------------|
+ 
+** Solution description
+ The system is separated into the following components:
+ 1. Matching Engine
+ 2. Order Management
+ 3. Order Book
+ 4. Order
+ 5. Market Data
+ 6. Trader
+Description of each component follows next.
+
+*** Matching Engine
+    The matching engine is the main interface to the clients, it is responsible for initializing all the components required to operate the market and receive requests from clients (traders)
+*** Order Management
+    The core of matching engine. Main responsibilities are: 
+      * matching received orders
+      * notify order owners
+      * advise market data API with order book updates.
+**** Design approach:
+         * Single Produce Single Consumer queue is used to store and dispatch order requests. This allows matching orders asynchronously. 
+         * Active orders are stored in a container. Choice of the container is influenced by answering the following questions:
+           1. Performance is critical?
+              Yes, when large number of orders are stored.
+           2. Sorting required?
+              No, only min/max elements needed for the matching algorithm.
+           3. Lookups required?
+              No.
+           4. Insertions/deletions from the container.
+              No insertion happens in the middle or at the front of the container.
+           Although choosing a sorted data structure like std::set or std::map is an easy option, they are not be the most efficient for this task, because they are always sorted which is not needed and and might slowdown insert operations. Also std::set and std::map are implemented on top of linked list which is not efficient for traversal, both in complexity and performance.
+           To make use of CPU cache and thus a performance boost, choice of contiguous memory is desirable. Binary heap on top of array happens to be the reasonable choice, benefiting from heap properties as well as data locality. Heap is not a sorted but access to min/max items is trivial when heap property is preserved, which is just enough for the purpose of the matching algorithm. average insertion complexity is O(Log(n)) and min/max retrieval is O(1).
+    Using two heaps, a max heap for buy orders, and min heap for sell orders. first (max) element in the buy order heap is matched with the first (min) element the buy orders if the price. If the price crosses, then trade will be executed and volume will be deducted. This operation is repeated until price can't be crossed anymore or there are no orders in the queue. The use this algorithms is inspired from a classical problem of running medians using two heaps (http://www.dsalgo.com/2013/02/RunningMedian.php.html). The payout of performance happens as the size of the order queue grows.
+*** Order book
+ order book groups orders by contracts and ensure that only orders with the same contract ID are matched against each other. Hash map (std::unordered_map) is used to represent order book with contact used as a hash key.
+*** Order
+ Order contains all data required to compose a market order, such as price, volume etc.. It is worth to mention that price is represented in cents, thus allow integer representation of the price instead of double, which is much simpler when it comes to compare operations, i.e no need for epsilon.
+*** Market Data
+    Main responsibility is notifying all subscribed clients with order updates. Delegations design pattern is used to implement events behaviour. Any class that is interested in receiving event must inherit from a event class named Delegate and then implements all the virtual functions of the delegate class. The choice of this approach is inspired from Objective-C OS API which I used back in 2011.
+*** Trader
+    Trader is a Representation of client used to initiate order requests and handle received updates. A callback function can be created to be invoked when an event occur.
     
-     * Lookups required?
-       No.
-       
-     * Insertions/deletions from the container.
-       Objects are always appended at the back. No insertion happens in the middle of front of the container.
-   
-       
+**  Diagrams
+The following diagrams are presented to help with understanding the source code implementation 
+*** Class Diagram
+     #+begin_src plantuml :file cd.png :results output silent:
+      title Matching Engine  Class Diagram
+   class marketData {
+	   +marketData()
+	   +marketData(const marketData& other)
+	   +marketData(marketData&& other)
+	   +~marketData()
+	   +operator=(const marketData& other) : marketData&
+	   +operator=(marketData&& other) : marketData&
+	   -m_traders : std::unordered_set< std::shared_ptr<marketDataDelegate> >
+	   +publishOrderBook(const orderBook& p_orderBook) : void
+	   +publishPublicTrade(const tradeData& p_tradeData) : void
+	   +subscribe(std::shared_ptr<marketDataDelegate> p_subscriber) : void
+   }
+
+   abstract class marketDataDelegate {
+	   +~marketDataDelegate()
+	   +{abstract} onOrderBook(const orderBook& p_orderBook) : void
+	   +{abstract} onPublicTrade(const tradeData& p_tradeData) : void
+   }
+
+   class matchingEngine {
+	   +matchingEngine()
+	   +matchingEngine(const matchingEngine& other)
+	   +matchingEngine(matchingEngine&& other)
+	   +~matchingEngine()
+	   +addOrder(const std::shared_ptr<orderDelegate>& p_trader, unsigned int p_contractID, int p_volume, double p_price, orderSide p_side) : bool
+	   -m_marketData : marketData
+	   +operator=(const matchingEngine& other) : matchingEngine&
+	   +operator=(matchingEngine&& other) : matchingEngine&
+	   -m_orderManagement : orderManagement
+	   +getOrderManagement() : orderManagement&
+	   -m_orderMatchingTask : std::future<bool>
+	   +addTrader() : std::shared_ptr<trader>
+	   -m_thread : std::thread
+	   +close() : void
+	   +open() : void
+   }
+
+   class order {
+	   +order()
+	   +order(unsigned int p_contractID, unsigned int p_ID, int p_volume, double p_price, orderSide p_side, const std::shared_ptr<orderDelegate>& p_owner)
+	   +~order()
+	   +operator<(const order& other) : bool
+	   +operator>(const order& other) : bool
+	   -price_to_cents(const double price) : constexpr int
+	   +price() : int
+	   +side() : int
+	   +volume() : int
+	   +operator<<(std::ostream& os, const order& p) : std : : ostream&
+	   +owner() : std::shared_ptr<orderDelegate>&
+	   +orderSideToSting(const orderSide p_side) : std::string
+	   +sideStr() : std::string
+	   +ID() : unsigned int
+	   +contractID() : unsigned int
+	   +setVolume(int p_volume) : void
+   }
+
+   class orderBook {
+	   +orderBook()
+	   +orderBook(const orderBook& other)
+	   +addOrder(order p_order) : bool
+	   +getBuyOrdersSorted() : std::vector<order>
+	   +getSellOrders() : std::vector<order>
+	   +getSellOrdersSorted() : std::vector<order>
+	   -m_buyOrders : std::vector<order>
+	   -m_sellOrders : std::vector<order>
+	   +getBuyOrders() : std::vector<order>&
+   }
+
+   abstract class orderDelegate {
+	   +~orderDelegate()
+	   +{abstract} onOrderExecution(const tradeData& p_orderExcution) : void
+   }
+
+   class orderExecutionState {
+   }
+
+   class orderManagement {
+	   +orderManagement(marketData& p_delegate)
+	   +orderManagement(const orderManagement& other)
+	   +orderManagement(orderManagement&& other)
+	   +~orderManagement()
+	   +addOrder(std::shared_ptr<orderDelegate> p_trader, unsigned int p_contractID, int volume, double price, orderSide side) : bool
+	   +matchOrders() : bool
+	   -m_queue : boost::lockfree::spsc_queue<order, boost::lockfree::capacity<4096> >
+	   -m_delegate : marketData&
+	   +operator=(const orderManagement& other) : orderManagement&
+	   +operator=(orderManagement&& other) : orderManagement&
+	   -m_orderBooks : std::unordered_map<unsigned int, orderBook>
+	   +totalTradedVolume() : unsigned int
+	   +totalVolume() : unsigned int
+   }
+
+   class tradeData {
+	   +tradeData(unsigned int p_contractID, unsigned int p_orderID, int p_tradedVolume, int p_price)
+	   +m_state : const orderExecutionState
+	   +m_timeStamp : const std::time_t
+	   +orderExecutionStateToString() : std::string
+	   +timeStamp() : std::string
+	   +toString() : std::string
+   }
+
+   class trader {
+	   +trader(matchingEngine& p_market)
+	   +~trader()
+	   +sendOrder(unsigned int p_contractID, int p_volume, double p_price, orderSide p_side) : bool
+	   -m_market : matchingEngine&
+	   -{static} m_IDGenerator : static unsigned int
+	   -<void(const tradeData &) : std::function
+	   -<void(const tradeData &) : std::function
+	   -<void(const orderBook &) : std::function
+	   -onOrderBook(const orderBook& p_orderBook) : void
+	   -onOrderExecution(const tradeData& p_orderExcution) : void
+	   -onPublicTrade(const tradeData& p_tradeData) : void
+	   +setOnOrderBookCallBack(std::function<void(constorderBook&)>) : void
+	   +setOnOrderExecutionCallBack(std::function<void(consttradeData&)>) : void
+	   +setOnPublicTradeCallBack(std::function<void(consttradeData&)>) : void
+   }
+
+   enum orderSide {
+	   BUY
+	   SELL
+   }
+
+   marketDataDelegate <|-- trader
+   orderDelegate <|-- trader
+   marketData o-- marketDataDelegate
+   matchingEngine o-- marketData
+   matchingEngine o-- orderManagement
+   orderBook "2" o-- order
+   orderManagement o-- marketData
+   orderManagement o-- order
+   orderManagement o-- orderBook
+   tradeData o-- orderExecutionState
+   trader o-- matchingEngine
+
+   #+end_src
+
+*** Sequence Diagram
+#+begin_src plantuml :file sd.png :results output silent:
+      ' skinparam monochrome true
+      title Matching Engine  Sequence Diagram
+
+      create MatchingEngine
+
+      activate MatchingEngine
+      [o-> MatchingEngine : create
+      create orderManagement
+      MatchingEngine -> orderManagement : creates
+      create orderBook
+      orderManagement -> orderBook : creates
+      create marketData
+      MatchingEngine -> marketData : creates
+      deactivate MatchingEngine
+
+
+      [o-> MatchingEngine : addTrader
+      activate MatchingEngine
+      create Trader
+      MatchingEngine -> Trader : creates
+      <-MatchingEngine: return handle to trader
+      deactivate MatchingEngine
+
+      Trader -> MatchingEngine : addOrder
+      activate MatchingEngine
+      MatchingEngine -> orderManagement : createOrder
+      activate orderManagement
+      orderManagement -> MatchingEngine : status
+      deactivate orderManagement
+      MatchingEngine -> marketData : subscribe(Trader)     
+      MatchingEngine -> Trader : status
+      deactivate MatchingEngine
+
+      orderManagement ->> orderManagement : matchOrders (async)
+      activate orderManagement
+      orderManagement -> Trader : onOrderExcecution (if order is matched)
+      orderManagement -> marketData : PublishPublicTrades 
+      activate marketData
+      marketData -> Trader: onPublicTrade
+      deactivate marketData
+      orderManagement -> marketData : PublishorderBook
+      activate marketData
+      marketData -> Trader: onOrderBook
+      deactivate marketData
+      deactivate orderManagement
+
+
+      #+end_src
+
+      #+RESULTS:
+* Limitations:
+  1. The matching engine does not support sending orders from more than one thread.
+

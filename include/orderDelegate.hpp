@@ -3,9 +3,6 @@
 
 #include "TradeGlobals.hpp"
 
-//chage onPublic order to pass two vectors
-//add trader to order object
-// implement MT properly
 namespace webbtraders
 {
 
@@ -14,7 +11,11 @@ class order;
 class orderDelegate
 {
  public:
+
+  //! Delegate function. Called when execution is generated
   virtual void onOrderExecution(const tradeData& p_orderExcution ) = 0;
+
+  //! Destructor
   virtual ~orderDelegate() = default;
          
 };

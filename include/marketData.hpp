@@ -3,12 +3,6 @@
 
 #include <unordered_set>
 
-
-/*
- * A market data API, used by a client (the unit test) to receive the order book as well as public trades
- (report of execution where client identification has been removed)
-*/
-
 namespace webbtraders
 {
 
@@ -18,16 +12,18 @@ class tradeData;
 class orderBook;
 class marketData
 {
+
  public:
   //! Default constructor
   marketData() = default;
 
-  // void logOrder( unsgined int p_order_ID,  );
+  //! Add subscriber 
   void subscribe(std::shared_ptr<marketDataDelegate> p_subscriber);
-  // virtual void onOrderExecution(const order& p_order) override;
-  //virtual void onPublicTrade() override;
-  //  virtual void onTrade() override;
+
+  //! Publish public trade
   void publishPublicTrade(const tradeData& p_tradeData);
+
+  //! Publish order book
   void publishOrderBook(const orderBook& p_orderBook);
         
   //! Copy constructor
@@ -46,11 +42,11 @@ class marketData
   marketData& operator=(marketData &&other) = delete;
 
  private:
-        
+  //! Subscriber list
   std::unordered_set< std::shared_ptr<marketDataDelegate> > m_traders;
 
-
 };
+
 }  // webbbraders
 
 #endif // MARKETDATA_H

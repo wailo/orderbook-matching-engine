@@ -3,14 +3,11 @@
 #include "marketData.hpp"
 #include "marketDataDelegate.hpp"
 
-
 using namespace webbtraders;
-
 
 void marketData::subscribe(std::shared_ptr<marketDataDelegate> p_subscriber)
 {    m_traders.insert(p_subscriber);
 }
-
 
 
 void marketData::publishPublicTrade(const tradeData& p_tradeData)
@@ -29,4 +26,3 @@ void marketData::publishOrderBook(const orderBook& p_orderBook)
     tr->onOrderBook(p_orderBook);
   }  
 }
-

@@ -7,6 +7,7 @@
 
 #include "order.hpp"
 #include <boost/lockfree/spsc_queue.hpp>
+
 namespace webbtraders
 {
 
@@ -17,13 +18,11 @@ class orderBook;
 class orderManagement
 {
  public:
-  //! Default constructor
 
   //! Constructor
   orderManagement(marketData& p_delegate) noexcept;
 
-  //! Send Order
-  //! return true if order request succeed, false otherwise
+  //! Send Order,  return true if order request succeed, false otherwise
   bool addOrder(std::shared_ptr<orderDelegate> p_trader, unsigned int p_contractID, int volume, double price, orderSide side);
 
   //! Match Orders
@@ -45,35 +44,41 @@ class orderManagement
   orderManagement& operator=(orderManagement &&other) = delete;
 
 
-  // for unit tests
+  //! For unit tests: total traded volume get functions
   inline unsigned int totalTradedVolume() const
   {
     return m_totalTradedVolume;
   }
-        
+
+  //! For unit tests: total received orders volume get functions
   inline unsigned int totalVolume() const
   {
     return m_totalVolume;
   }
-        
- private:
 
-  // std::vector<order> m_buyOrders;
-  //  std::vector<order> m_sellOrders;
-  // std::unorder_set<order> m_orderbook;
-  unsigned int m_UUID{1};
+  
+ private:
+  
+  //! order unique ID
+  unsigned int m_orderID{1};
+
+  // Handle to Market Data API
   marketData& m_delegate;
 
-  // <Order_Id, trader>;
-
+  // Order Book list
   std::unordered_map<unsigned int, orderBook > m_orderBooks;
 
-  // for unit tests
+  //! For unit tests:  Accumulative count of traded volume
   unsigned int m_totalTradedVolume{0};
+
+  //! For unit tests:  Accumulative count of received order volume
   unsigned int m_totalVolume{0};
-  //LockFreeQueue<order> m_queue;
-  boost::lockfree::spsc_queue<order, boost::lockfree::capacity<1024>> m_queue;
+
+  //! Single Producer Single Consumer orders storage
+  boost::lockfree::spsc_queue<order, boost::lockfree::capacity<4096>> m_queue;
+
 };
+
 }  // webbtraders
 
 

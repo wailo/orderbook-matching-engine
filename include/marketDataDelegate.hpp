@@ -11,10 +11,14 @@ class tradeData;
 class marketDataDelegate
 {
  public:
-        
+
+  //! Delegate function. Called when order book is changed
   virtual void onOrderBook(const orderBook& p_orderBook) = 0;
+
+  //! Delegate function. Called when public trade is exchanged
   virtual void onPublicTrade(const tradeData& p_tradeData) = 0;
-  // virtual void onTrade() = 0;
+
+  //! Destructor
   virtual ~marketDataDelegate() = default;
 };
     

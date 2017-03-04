@@ -37,7 +37,7 @@ bool orderManagement::addOrder(std::shared_ptr<orderDelegate> p_trader, unsigned
     }
   }
   
-  m_queue. push(order(p_contractID, m_UUID, p_volume, price, side, p_trader));
+  m_queue. push(order(p_contractID, m_orderID++, p_volume, price, side, p_trader));
   m_totalVolume += p_volume;
 
   return true;

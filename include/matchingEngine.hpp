@@ -36,9 +36,13 @@ class matchingEngine
   //! orderManagement getter function
   orderManagement& getOrderManagement();
 
+  //! Add order to the market
   bool addOrder(const std::shared_ptr<orderDelegate>& p_trader, unsigned int p_contractID, int p_volume, double p_price, orderSide p_side );
 
+  //! Open market and start order executions
   void open();
+
+  //! Close market and stop order executions
   void close();
 
  private:

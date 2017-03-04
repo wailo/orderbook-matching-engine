@@ -5,7 +5,9 @@
 namespace webbtraders
 {
 
+//! Order execution state
 enum class orderExecutionState {FILLED, PARTIAL};
+
 
 class tradeData
 {
@@ -19,6 +21,7 @@ class tradeData
       m_state(p_tradedVolume? orderExecutionState::PARTIAL : orderExecutionState::FILLED)
   {}
 
+  //! Helper function. Converts order execution state to string
   std::string orderExecutionStateToString() const
   {
     switch (m_state)
@@ -38,23 +41,38 @@ class tradeData
   }
 
 
-  std::string toString()
+  //! Helper function to print trade data
+  inline std::string toString()
   {
-    /*Buy 100@12.30*/
     return std::string(timeStamp() + " " + orderExecutionStateToString() + " " +std::to_string(m_tradedVolume) + "@" + std::to_string(m_price/100.0));
   }
-  
-  std::string timeStamp() const
+
+  //! Trade time Stamp
+  const std::time_t m_timeStamp;
+
+  //! Trade contract ID
+  const unsigned int m_contractID{0};
+
+  //! Trade order ID
+  const unsigned int m_orderID{0};
+
+  //! Trade volume
+  const int m_tradedVolume{0};
+
+  //! Trade price
+  const int m_price{0};
+
+  //! Trade volume state
+  const orderExecutionState m_state;
+
+ private:
+
+  // Get time stamp as string
+  inline std::string timeStamp() const
   {
     return std::ctime(&m_timeStamp);
   }
-
-  const std::time_t m_timeStamp;
-  const unsigned int m_contractID{0};
-  const unsigned int m_orderID{0};
-  const int m_tradedVolume{0};
-  int m_price{0};
-  const orderExecutionState m_state;
+  
 }; 
 
 }  // webbtraders
