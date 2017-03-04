@@ -5,12 +5,12 @@ This project is a basic implementation of a market data matching engine. The mat
 The engine use multi threads to enable sending orders request at high throughput.
  The solution is developed and tested in Mac OS X, using Clang 4.2.1 and BOOST 1.68
 
-* Building the Solution
-** Requirements
+* The source code
+** Dependencies 
    * CMAKE 3.0
    * Clang C++14
    * BOOST unit test framework
-** Steps
+** Building the solution
     From the project directory, execute the following commands:
     #+BEGIN_SRC
     cd build
@@ -21,37 +21,56 @@ The engine use multi threads to enable sending orders request at high throughput
     #+BEGIN_SRC
     make test
 #+END_SRC
+ Example
+    #+BEGIN_SRC C++
+    using namespace webbtraders;
+    matchingEngine _market;
+
+    // Add traders to the market
+    auto _traderA = _market.addTrader();    
+    auto _traderB = _market.addTrader();    
+    
+    // Set a callback to read data when order is executed
+    _traderA->setOnOrderExecutionCallBack([&](const tradeData& p_tradeData) {
+    std::cout << p_tradeData.m_tradedVolume;  });
+    
+    // Trader A sends a BUY order with contract ID:7, Volume:100, Price:12.30
+    _traderA->sendOrder(7, 100, 12.30, orderSide::BUY );
+    
+    //  Trader B sends a SELL order with contract ID:7, Volume:100, price 12:30  
+    _traderB->sendOrder(7, 100, 12.30, orderSide::SELL );
+#+END_SRC
+    
 * Technical Content
 
 ** Task breakdown
   Basic operation of the matching engine requires the following functionalities:
   1. Matching algorithm, that matches a buy bid with the highest price to an ask bid with the lowest price.
   2. Asynchronous order matching so the engine is always available to receive order requests.
-  3. Notification engine to notify participated parties when there is updates.
-  4. Updates should be customizable, so clients can post process data with minimal effort.
+  3. Notification engine to publish market updates to the participants.
 
 ** Scope of the task
  The following system requirements define the scope of the task:
  #+ATTR_HTML: :border 2 :rules all :frame border
-  |-----+----------------------+-------------------------------------------------------------------------------|
-  | ID# | Application          | Description                                                                   |
-  |-----+----------------------+-------------------------------------------------------------------------------|
-  |   1 | Order Management API | Should Matches/executes orders                                                |
-  |   2 | Order Management API | Should Send order buy update to the owner of a buy order                      |
-  |   3 | Order Management API | Should Send order sell update to the owner of a sell order                    |
-  |   4 | Order Management API | Should Keep track of active orders                                            |
-  |   5 | Order Management API | Should Publish order book and public trades using Market Data API             |
-  |   6 | Order Management API | Should sort order book by price [requirement from email]                      |
-  |   7 | Client (trader)      | Should send buy order requests to the Order Management API                    |
-  |   8 | Client (trader)      | Should send sell order requests to the Order Management API                   |
-  |   9 | Client (trader)      | Should handle data received from the Market Data API and Order Management API |
-  |  10 | Order                | Should store: Contract ID, Unique order ID, Price, Volume, Side,              |
-  |  11 | Order                | Orders are grouped by contracts, contract is a unique ID                      |
-  |  12 | Market Data API      | Should send order books to all subscribed clients                             |
-  |  13 | Market Data API      | Should send public traders to all subscribed clients                          |
-  |  14 | Matching Engine API  | Provide public interface to the client                                        |
-  |  15 | Matching Engine API  | Should Receive order requests from client                                     |
-  |-----+----------------------+-------------------------------------------------------------------------------|
+  |-----+----------------------+--------------------------------------------------------------------------|
+  | ID# | Application          | Description                                                              |
+  |-----+----------------------+--------------------------------------------------------------------------|
+  |   1 | Order Management API | Match/execute orders                                                     |
+  |   2 | Order Management API | Send order buy update to the owner of a buy order                        |
+  |   3 | Order Management API | Send order sell update to the owner of a sell order                      |
+  |   4 | Order Management API | Keep track of active orders                                              |
+  |   5 | Order Management API | Publish order book updates and public trades using the Market Data API   |
+  |   6 | Order Management API | Sort order book by price [requirement from email]                        |
+  |   7 | Client (trader)      | Send buy order requests to the Order Management API                      |
+  |   8 | Client (trader)      | Send sell order requests to the Order Management API                     |
+  |   9 | Client (trader)      | Handle data received from the Market Data API and Order Management API   |
+  |  10 | Order                | Contain: Contract ID, Unique order ID, Price, Volume, Side               |
+  |  11 | Order Book           | Group orders by contracts, contract is a unique ID                       |
+  |  12 | Market Data API      | Send order books to all subscribed clients                               |
+  |  13 | Market Data API      | Send public traders to all subscribed clients                            |
+  |  14 | Matching Engine API  | Provide public interface to the client                                   |
+  |  15 | Matching Engine API  | Handle order requests from client                                        |
+  |-----+----------------------+--------------------------------------------------------------------------|
  
 ** Solution description
  The system is separated into the following components:
@@ -64,13 +83,14 @@ The engine use multi threads to enable sending orders request at high throughput
 Description of each component follows next.
 
 *** Matching Engine
-    The matching engine is the main interface to the clients, it is responsible for initializing all the components required to operate the market and receive requests from clients (traders)
+    The matching engine is the main interface to the clients, it is responsible for initializing all the components required for market operations and handles requests from clients (traders)
 *** Order Management
     The core of matching engine. Main responsibilities are: 
-      * matching received orders
-      * notify order owners
-      * advise market data API with order book updates.
-**** Design approach:
+      * Matching received orders
+      * Notify order owners
+      * Advise market data API with order book updates.
+    
+Design approach:
          * Single Produce Single Consumer queue is used to store and dispatch order requests. This allows matching orders asynchronously. 
          * Active orders are stored in a container. Choice of the container is influenced by answering the following questions:
            1. Performance is critical?
@@ -83,15 +103,15 @@ Description of each component follows next.
               No insertion happens in the middle or at the front of the container.
            Although choosing a sorted data structure like std::set or std::map is an easy option, they are not be the most efficient for this task, because they are always sorted which is not needed and and might slowdown insert operations. Also std::set and std::map are implemented on top of linked list which is not efficient for traversal, both in complexity and performance.
            To make use of CPU cache and thus a performance boost, choice of contiguous memory is desirable. Binary heap on top of array happens to be the reasonable choice, benefiting from heap properties as well as data locality. Heap is not a sorted but access to min/max items is trivial when heap property is preserved, which is just enough for the purpose of the matching algorithm. average insertion complexity is O(Log(n)) and min/max retrieval is O(1).
-    Using two heaps, a max heap for buy orders, and min heap for sell orders. first (max) element in the buy order heap is matched with the first (min) element the buy orders if the price. If the price crosses, then trade will be executed and volume will be deducted. This operation is repeated until price can't be crossed anymore or there are no orders in the queue. The use this algorithms is inspired from a classical problem of running medians using two heaps (http://www.dsalgo.com/2013/02/RunningMedian.php.html). The payout of performance happens as the size of the order queue grows.
+    Using two heaps, a max heap for buy orders, and a min heap for sell orders. First (max) element in the buy order heap is matched with the first (min) element the sell orders. If the price crosses, then trade will be executed and volume will be deducted. This operation is repeated until price can't be crossed anymore or there are no orders in the queue. The use this algorithms is inspired from a classical problem of running medians using two heaps (http://www.dsalgo.com/2013/02/RunningMedian.php.html). The payout of performance happens as the size of the order queue grows.
 *** Order book
  order book groups orders by contracts and ensure that only orders with the same contract ID are matched against each other. Hash map (std::unordered_map) is used to represent order book with contact used as a hash key.
 *** Order
  Order contains all data required to compose a market order, such as price, volume etc.. It is worth to mention that price is represented in cents, thus allow integer representation of the price instead of double, which is much simpler when it comes to compare operations, i.e no need for epsilon.
 *** Market Data
-    Main responsibility is notifying all subscribed clients with order updates. Delegations design pattern is used to implement events behaviour. Any class that is interested in receiving event must inherit from a event class named Delegate and then implements all the virtual functions of the delegate class. The choice of this approach is inspired from Objective-C OS API which I used back in 2011.
+    Main responsibility is notifying all subscribed clients with order updates. Delegations design pattern is used to implement events behaviour. Any class that is interested in receiving event must inherit from a event class named Delegate and then implements the virtual functions of the delegate class. The choice of this approach is inspired from Objective-C OS API which I used back in 2011.
 *** Trader
-    Trader is a Representation of client used to initiate order requests and handle received updates. A callback function can be created to be invoked when an event occur.
+    Trader is a Representation of client used to initiate order requests and handle received updates. A callback function can be created to be invoked when an event occurs.
     
 **  Diagrams
 The following diagrams are presented to help with understanding the source code implementation 
