@@ -91,6 +91,7 @@ bool orderManagement::matchOrders()
       _buy_order.setVolume(_buy_order.volume() - trade_volume);
       
       // Notify the order owners
+      // Not sure which price should be published. So putting buy price for now.
       _sell_order.owner()->onOrderExecution({_contractID, _sell_order.ID(), trade_volume, _buy_order.price()});
       _buy_order.owner()->onOrderExecution({_contractID, _buy_order.ID(), trade_volume, _buy_order.price()});
 
