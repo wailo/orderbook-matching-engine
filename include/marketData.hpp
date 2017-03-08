@@ -3,7 +3,7 @@
 
 #include <unordered_set>
 
-namespace webbtraders
+namespace market
 {
 
 class tradeData;

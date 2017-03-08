@@ -5,7 +5,7 @@
 #include "orderBook.hpp"
 #include "order.hpp"
 
-using namespace webbtraders;
+using namespace market;
 
 
 unsigned int trader::m_IDGenerator = 0;

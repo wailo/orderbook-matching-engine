@@ -3,7 +3,7 @@
 #include "marketData.hpp"
 #include "marketDataDelegate.hpp"
 
-using namespace webbtraders;
+using namespace market;
 
 void marketData::subscribe(std::shared_ptr<marketDataDelegate> p_subscriber)
 {    m_traders.insert(p_subscriber);

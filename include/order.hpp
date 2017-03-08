@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-namespace webbtraders
+namespace market
 {
 
 //! orderSide BUY/SELL
@@ -140,6 +140,6 @@ class order
 };
 
 
-}  // webbtraders
+}  // market
 
 #endif // ORDER_H

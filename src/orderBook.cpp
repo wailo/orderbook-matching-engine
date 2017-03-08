@@ -1,6 +1,6 @@
 #include "orderBook.hpp"
 
-using namespace webbtraders;
+using namespace market;
 
 bool orderBook::addOrder( order p_order )
 {

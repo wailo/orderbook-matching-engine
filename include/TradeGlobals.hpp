@@ -2,7 +2,7 @@
 #define TRADEGLOBALS_H
 #include <chrono>
 
-namespace webbtraders
+namespace market
 {
 
 //! Order execution state
@@ -75,6 +75,6 @@ class tradeData
   
 }; 
 
-}  // webbtraders
+}  // market
 
 #endif /* TRADEGLOBALS_H */

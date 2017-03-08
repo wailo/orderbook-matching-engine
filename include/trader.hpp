@@ -5,7 +5,7 @@
 #include "orderDelegate.hpp"
 
 
-namespace webbtraders
+namespace market
 {
 
 class matchingEngine;
@@ -68,6 +68,6 @@ class trader :
 
 };
 
-}  // webbtraders
+}  // market
 
 #endif /* TRADER_H */

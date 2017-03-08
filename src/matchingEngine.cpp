@@ -4,7 +4,7 @@
 #include "trader.hpp"
 #include "orderBook.hpp"
 
-using namespace webbtraders;
+using namespace market;
 
 matchingEngine::matchingEngine()
     : m_orderManagement(m_marketData), 

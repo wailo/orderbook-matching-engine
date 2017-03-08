@@ -5,7 +5,7 @@
 #include <algorithm>
 #include "order.hpp"
 
-namespace webbtraders
+namespace market
 {
 
 class order;
@@ -76,6 +76,6 @@ class orderBook
 
 };
 
-}  // webbtraders
+}  // market
 
 #endif /* ORDERBOOK_H */

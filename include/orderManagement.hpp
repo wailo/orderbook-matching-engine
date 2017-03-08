@@ -8,7 +8,7 @@
 #include "order.hpp"
 #include <boost/lockfree/spsc_queue.hpp>
 
-namespace webbtraders
+namespace market
 {
 
 class marketData;
@@ -79,7 +79,7 @@ class orderManagement
 
 };
 
-}  // webbtraders
+}  // market
 
 
 #endif // ORDER_MANAGEMENT_H

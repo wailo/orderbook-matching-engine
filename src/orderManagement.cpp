@@ -9,7 +9,7 @@
 #include "marketData.hpp"
 #include "orderBook.hpp"
 
-using namespace webbtraders;
+using namespace market;
 
 orderManagement::orderManagement(marketData& p_delegate) noexcept
     :m_delegate(p_delegate)

@@ -3,7 +3,7 @@
 #include "orderManagement.hpp"
 #include "marketData.hpp"
 
-namespace webbtraders
+namespace market
 {
 
 class trader;
@@ -66,4 +66,4 @@ class matchingEngine
   std::thread m_thread;
 };
     
-}  // webbtraders
+}  // market

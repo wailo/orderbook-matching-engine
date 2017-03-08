@@ -2,7 +2,7 @@
 #define MARKET_DATA_DELEGATE_H
 
 
-namespace webbtraders
+namespace market
 {
 
 class orderBook;
@@ -23,6 +23,6 @@ class marketDataDelegate
 };
     
     
-}  // webbtraders
+}  // market
 
 #endif // MARKET_DATA_DELEGATE_H

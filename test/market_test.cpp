@@ -14,7 +14,7 @@ enum contract { IBM, APPLE };
 
 BOOST_AUTO_TEST_CASE(adding_valid_orders)
 {
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
   auto _traderA = _market.addTrader();
   auto _traderB = _market.addTrader();
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(adding_valid_orders)
 
 BOOST_AUTO_TEST_CASE(adding_invalid_orders)
 {
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
   auto _traderA = _market.addTrader();    
 
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(adding_invalid_orders)
 
 BOOST_AUTO_TEST_CASE(matching_orders_no_cross_price)
 {
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
   auto _traderA = _market.addTrader();    
   auto _traderB = _market.addTrader();    
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(matching_orders_no_cross_price)
 
 BOOST_AUTO_TEST_CASE(matching_orders_no_cross_contract)
 {
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
   auto _traderA = _market.addTrader();    
   auto _traderB = _market.addTrader();    
@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(matching_orders_cross_contract)
 {
   for (unsigned int i=0; i < 1; i++)
   {
-    using namespace webbtraders;
+    using namespace market;
     matchingEngine _market;
     auto _traderA = _market.addTrader();    
     auto _traderB = _market.addTrader();    
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(matching_orders_cross)
 {
   for (int i=0; i<100; i++)
   {
-    using namespace webbtraders;
+    using namespace market;
     matchingEngine _market;
     auto _traderA = _market.addTrader();    
     auto _traderB = _market.addTrader();    
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(orders_example_from_the_task)
     Order 4 Sell 115@12.17
   */
     
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
   auto _traderA = _market.addTrader();
   auto _traderB = _market.addTrader();
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(order_updates_test)
     Order 4 Sell 115@12.17
   */
     
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
   auto _traderA = _market.addTrader();
   auto _traderB = _market.addTrader();
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(public_trades_test)
     Order 4 Sell 115@12.17
   */
     
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
   auto _traderA = _market.addTrader();
   auto _traderB = _market.addTrader();
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(order_book_test)
     Order 4 Sell 115@12.17
   */
     
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
   auto _traderA = _market.addTrader();
   auto _traderB = _market.addTrader();
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE(order_book_test)
 
 BOOST_AUTO_TEST_CASE(stress_test)
 {
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
 
   unsigned int n = 1000;
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE(stress_test)
 
 BOOST_AUTO_TEST_CASE(multi_thread_test)
 {
-  using namespace webbtraders;
+  using namespace market;
   matchingEngine _market;
 
   unsigned int n = 1000;

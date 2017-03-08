@@ -3,7 +3,7 @@
 
 #include "TradeGlobals.hpp"
 
-namespace webbtraders
+namespace market
 {
 
 class order;
@@ -20,6 +20,6 @@ class orderDelegate
          
 };
 
-}  // webbtraders
+}  // market
 
 #endif /* ORDERDELEGATE_H */
