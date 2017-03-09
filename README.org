@@ -13,6 +13,7 @@ The engine use multi threads to enable sending orders request at high throughput
 ** Building the solution
     From the project directory, execute the following commands:
     #+BEGIN_SRC
+    mkdir build
     cd build
     cmake ..
     make
