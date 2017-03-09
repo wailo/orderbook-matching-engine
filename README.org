@@ -23,7 +23,7 @@ The engine use multi threads to enable sending orders request at high throughput
 #+END_SRC
  Example
     #+BEGIN_SRC C++
-    using namespace webbtraders;
+    using namespace market;
     matchingEngine _market;
 
     // Add traders to the market
@@ -60,7 +60,7 @@ The engine use multi threads to enable sending orders request at high throughput
   |   3 | Order Management API | Send order sell update to the owner of a sell order                      |
   |   4 | Order Management API | Keep track of active orders                                              |
   |   5 | Order Management API | Publish order book updates and public trades using the Market Data API   |
-  |   6 | Order Management API | Sort order book by price [requirement from email]                        |
+  |   6 | Order Management API | Sort order book by price                                                 |
   |   7 | Client (trader)      | Send buy order requests to the Order Management API                      |
   |   8 | Client (trader)      | Send sell order requests to the Order Management API                     |
   |   9 | Client (trader)      | Handle data received from the Market Data API and Order Management API   |
