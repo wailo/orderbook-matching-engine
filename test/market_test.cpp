@@ -103,7 +103,6 @@ BOOST_AUTO_TEST_CASE(matching_orders_cross)
 BOOST_AUTO_TEST_CASE(orders_example_from_the_task)
 {
   /*
-    Test case from the task
     Order 1 Buy 100@12.30
     Order 2 Buy 25@12:15
     Order 3 Buy 10@12.20
@@ -129,7 +128,6 @@ BOOST_AUTO_TEST_CASE(order_updates_test)
 {
 
   /*
-    Test case from the task
     Order 1 Buy 100@12.30
     Order 2 Buy 25@12:15
     Order 3 Buy 10@12.20
@@ -163,7 +161,6 @@ BOOST_AUTO_TEST_CASE(public_trades_test)
 {
 
   /*
-    Test case from the task
     Order 1 Buy 100@12.30
     Order 2 Buy 25@12:15
     Order 3 Buy 10@12.20
@@ -199,7 +196,6 @@ BOOST_AUTO_TEST_CASE(order_book_test)
 {
 
   /*
-    Test case from the task
     Order 1 Buy 100@12.30
     Order 2 Buy 25@12:15
     Order 3 Buy 10@12.20
