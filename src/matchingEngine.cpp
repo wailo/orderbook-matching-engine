@@ -19,10 +19,10 @@ matchingEngine::matchingEngine()
 
 matchingEngine::~matchingEngine()
 {
-    if (m_live)
-    {
-      close();
-    }
+  if (m_live)
+  {
+    close();
+  }
 }
 
 
@@ -30,19 +30,19 @@ bool matchingEngine::addOrder(const std::shared_ptr<orderDelegate>& p_trader, un
 {
 
   m_newOrder = m_orderManagement.addOrder(p_trader, p_contractID, p_volume, p_price, p_side );
-      return m_newOrder;
+  return m_newOrder;
 }
 
 std::shared_ptr<trader> matchingEngine::addTrader()
 {
-    auto _trader = std::make_shared<trader>(trader(*this));
-    m_marketData.subscribe(_trader);
-    return _trader;
+  auto _trader = std::make_shared<trader>(trader(*this));
+  m_marketData.subscribe(_trader);
+  return _trader;
 }
 
 orderManagement& matchingEngine::getOrderManagement()
 {
-    return m_orderManagement;
+  return m_orderManagement;
 }
 
 void matchingEngine::close()

@@ -1,12 +1,11 @@
 //Link to Boost
 #define BOOST_TEST_DYN_LINK
+//Define our Module name (prints at testing)
+#define BOOST_TEST_MODULE "BaseClassModule"
 
 #include "matchingEngine.hpp"
 #include "trader.hpp"
 #include "orderBook.hpp"
-
-//Define our Module name (prints at testing)
-#define BOOST_TEST_MODULE "BaseClassModule"
 #include <boost/test/unit_test.hpp>
 
 // dummy representation of order contracts
