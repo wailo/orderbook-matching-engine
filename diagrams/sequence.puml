@@ -1,0 +1,49 @@
+@startuml
+
+      ' skinparam monochrome true
+      title Matching Engine  Sequence Diagram
+
+      create MatchingEngine
+
+      activate MatchingEngine
+      [o-> MatchingEngine : create
+      create orderManagement
+      MatchingEngine -> orderManagement : creates
+      create orderBook
+      orderManagement -> orderBook : creates
+      create marketData
+      MatchingEngine -> marketData : creates
+      deactivate MatchingEngine
+
+
+      [o-> MatchingEngine : addTrader
+      activate MatchingEngine
+      create Trader
+      MatchingEngine -> Trader : creates
+      <-MatchingEngine: return handle to trader
+      deactivate MatchingEngine
+
+      Trader -> MatchingEngine : addOrder
+      activate MatchingEngine
+      MatchingEngine -> orderManagement : createOrder
+      activate orderManagement
+      orderManagement -> MatchingEngine : status
+      deactivate orderManagement
+      MatchingEngine -> marketData : subscribe(Trader)     
+      MatchingEngine -> Trader : status
+      deactivate MatchingEngine
+
+      orderManagement ->> orderManagement : matchOrders (async)
+      activate orderManagement
+      orderManagement -> Trader : onOrderExcecution (if order is matched)
+      orderManagement -> marketData : PublishPublicTrades 
+      activate marketData
+      marketData -> Trader: onPublicTrade
+      deactivate marketData
+      orderManagement -> marketData : PublishorderBook
+      activate marketData
+      marketData -> Trader: onOrderBook
+      deactivate marketData
+      deactivate orderManagement
+
+@enduml

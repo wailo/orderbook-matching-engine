@@ -1,0 +1,139 @@
+@startuml
+
+title Matching Engine  Class Diagram
+   class marketData {
+	   +marketData()
+	   +marketData(const marketData& other)
+	   +marketData(marketData&& other)
+	   +~marketData()
+	   +operator=(const marketData& other) : marketData&
+	   +operator=(marketData&& other) : marketData&
+	   -m_traders : std::unordered_set< std::shared_ptr<marketDataDelegate> >
+	   +publishOrderBook(const orderBook& p_orderBook) : void
+	   +publishPublicTrade(const tradeData& p_tradeData) : void
+	   +subscribe(std::shared_ptr<marketDataDelegate> p_subscriber) : void
+   }
+
+   abstract class marketDataDelegate {
+	   +~marketDataDelegate()
+	   +{abstract} onOrderBook(const orderBook& p_orderBook) : void
+	   +{abstract} onPublicTrade(const tradeData& p_tradeData) : void
+   }
+
+   class matchingEngine {
+	   +matchingEngine()
+	   +matchingEngine(const matchingEngine& other)
+	   +matchingEngine(matchingEngine&& other)
+	   +~matchingEngine()
+	   +addOrder(const std::shared_ptr<orderDelegate>& p_trader, unsigned int p_contractID, int p_volume, double p_price, orderSide p_side) : bool
+	   -m_marketData : marketData
+	   +operator=(const matchingEngine& other) : matchingEngine&
+	   +operator=(matchingEngine&& other) : matchingEngine&
+	   -m_orderManagement : orderManagement
+	   +getOrderManagement() : orderManagement&
+	   -m_orderMatchingTask : std::future<bool>
+	   +addTrader() : std::shared_ptr<trader>
+	   -m_thread : std::thread
+	   +close() : void
+	   +open() : void
+   }
+
+   class order {
+	   +order()
+	   +order(unsigned int p_contractID, unsigned int p_ID, int p_volume, double p_price, orderSide p_side, const std::shared_ptr<orderDelegate>& p_owner)
+	   +~order()
+	   +operator<(const order& other) : bool
+	   +operator>(const order& other) : bool
+	   -price_to_cents(const double price) : constexpr int
+	   +price() : int
+	   +side() : int
+	   +volume() : int
+	   +operator<<(std::ostream& os, const order& p) : std : : ostream&
+	   +owner() : std::shared_ptr<orderDelegate>&
+	   +orderSideToSting(const orderSide p_side) : std::string
+	   +sideStr() : std::string
+	   +ID() : unsigned int
+	   +contractID() : unsigned int
+	   +setVolume(int p_volume) : void
+   }
+
+   class orderBook {
+	   +orderBook()
+	   +orderBook(const orderBook& other)
+	   +addOrder(order p_order) : bool
+	   +getBuyOrdersSorted() : std::vector<order>
+	   +getSellOrders() : std::vector<order>
+	   +getSellOrdersSorted() : std::vector<order>
+	   -m_buyOrders : std::vector<order>
+	   -m_sellOrders : std::vector<order>
+	   +getBuyOrders() : std::vector<order>&
+   }
+
+   abstract class orderDelegate {
+	   +~orderDelegate()
+	   +{abstract} onOrderExecution(const tradeData& p_orderExcution) : void
+   }
+
+   class orderExecutionState {
+   }
+
+   class orderManagement {
+	   +orderManagement(marketData& p_delegate)
+	   +orderManagement(const orderManagement& other)
+	   +orderManagement(orderManagement&& other)
+	   +~orderManagement()
+	   +addOrder(std::shared_ptr<orderDelegate> p_trader, unsigned int p_contractID, int volume, double price, orderSide side) : bool
+	   +matchOrders() : bool
+	   -m_queue : boost::lockfree::spsc_queue<order, boost::lockfree::capacity<4096> >
+	   -m_delegate : marketData&
+	   +operator=(const orderManagement& other) : orderManagement&
+	   +operator=(orderManagement&& other) : orderManagement&
+	   -m_orderBooks : std::unordered_map<unsigned int, orderBook>
+	   +totalTradedVolume() : unsigned int
+	   +totalVolume() : unsigned int
+   }
+
+   class tradeData {
+	   +tradeData(unsigned int p_contractID, unsigned int p_orderID, int p_tradedVolume, int p_price)
+	   +m_state : const orderExecutionState
+	   +m_timeStamp : const std::time_t
+	   +orderExecutionStateToString() : std::string
+	   +timeStamp() : std::string
+	   +toString() : std::string
+   }
+
+   class trader {
+	   +trader(matchingEngine& p_market)
+	   +~trader()
+	   +sendOrder(unsigned int p_contractID, int p_volume, double p_price, orderSide p_side) : bool
+	   -m_market : matchingEngine&
+	   -{static} m_IDGenerator : static unsigned int
+	   -<void(const tradeData &) : std::function
+	   -<void(const tradeData &) : std::function
+	   -<void(const orderBook &) : std::function
+	   -onOrderBook(const orderBook& p_orderBook) : void
+	   -onOrderExecution(const tradeData& p_orderExcution) : void
+	   -onPublicTrade(const tradeData& p_tradeData) : void
+	   +setOnOrderBookCallBack(std::function<void(constorderBook&)>) : void
+	   +setOnOrderExecutionCallBack(std::function<void(consttradeData&)>) : void
+	   +setOnPublicTradeCallBack(std::function<void(consttradeData&)>) : void
+   }
+
+   enum orderSide {
+	   BUY
+	   SELL
+   }
+
+   marketDataDelegate <|-- trader
+   orderDelegate <|-- trader
+   marketData o-- marketDataDelegate
+   matchingEngine o-- marketData
+   matchingEngine o-- orderManagement
+   orderBook "2" o-- order
+   orderManagement o-- marketData
+   orderManagement o-- order
+   orderManagement o-- orderBook
+   tradeData o-- orderExecutionState
+   trader o-- matchingEngine
+
+@enduml
