@@ -117,9 +117,9 @@ Design approach:
 **  Diagrams
 The following diagrams are presented to help with understanding the source code implementation 
 *** Class Diagram
-[[[[file:diagrams/class.png]]]]
+[[file:diagrams/class.png]]
 *** Sequence Diagram
-[[[[file:diagrams/sequence.png]]]]
+[[file:diagrams/sequence.png]]
 * Limitations:
   1. The matching engine does not support sending orders from more than one thread.
 
